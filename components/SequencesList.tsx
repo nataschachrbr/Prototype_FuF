@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Plus, Search, GitBranch } from 'lucide-react'
 
-interface Sequence {
+export interface Sequence {
   id: string
   name: string
   status: 'active' | 'draft' | 'paused'
@@ -11,20 +11,14 @@ interface Sequence {
 }
 
 interface SequencesListProps {
+  sequences: Sequence[]
   onSelectSequence: (sequenceId: string) => void
   selectedSequenceId: string | null
+  onCreateNew: () => void
 }
 
-export function SequencesList({ onSelectSequence, selectedSequenceId }: SequencesListProps) {
+export function SequencesList({ sequences, onSelectSequence, selectedSequenceId, onCreateNew }: SequencesListProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  
-  const sequences: Sequence[] = [
-    { id: '1', name: 'Monthly Goals Checklist', status: 'active', enrolledCount: 12 },
-    { id: '2', name: 'Standard Outreach', status: 'active', enrolledCount: 24 },
-    { id: '3', name: 'Referral Follow-up', status: 'active', enrolledCount: 8 },
-    { id: '4', name: 'Cold Outreach V2', status: 'draft', enrolledCount: 0 },
-    { id: '5', name: 'Re-engagement', status: 'paused', enrolledCount: 15 },
-  ]
 
   const filteredSequences = sequences.filter(seq =>
     seq.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -47,7 +41,10 @@ export function SequencesList({ onSelectSequence, selectedSequenceId }: Sequence
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Sequences</h2>
-          <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <button 
+            onClick={onCreateNew}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
             <Plus className="w-5 h-5 text-gray-600" />
           </button>
         </div>

@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Zap, Mail, Clock, Phone, CheckSquare, Linkedin, X, ChevronUp, ChevronDown, Sparkles, Eye } from 'lucide-react'
 
 interface SequenceBuilderProps {
   sequenceId: string | null
+  sequenceName: string
+  onUpdateName: (newName: string) => void
 }
 
 type StepType = 
@@ -25,9 +27,9 @@ interface SequenceStep {
   content?: string
 }
 
-export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
-  const [showAddStepModal, setShowAddStepModal] = useState(false)
-  const [steps, setSteps] = useState<SequenceStep[]>([
+// Store steps per sequence
+const sequenceStepsMap: { [key: string]: SequenceStep[] } = {
+  '2': [ // Standard Outreach
     {
       id: '1',
       type: 'wait',
@@ -42,7 +44,28 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
       description: 'Your Monthly Goals - Let\'s Get Started!',
       content: 'Monthly kick-off mail'
     }
-  ])
+  ]
+}
+
+export function SequenceBuilder({ sequenceId, sequenceName, onUpdateName }: SequenceBuilderProps) {
+  const [showAddStepModal, setShowAddStepModal] = useState(false)
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [editedName, setEditedName] = useState(sequenceName)
+  
+  // Get steps for current sequence, default to empty array for new sequences
+  const initialSteps = sequenceId && sequenceStepsMap[sequenceId] ? sequenceStepsMap[sequenceId] : []
+  const [steps, setSteps] = useState<SequenceStep[]>(initialSteps)
+
+  // Update editedName when sequenceName prop changes (switching sequences)
+  useEffect(() => {
+    setEditedName(sequenceName)
+  }, [sequenceName])
+
+  // Update steps when sequence changes
+  useEffect(() => {
+    const newSteps = sequenceId && sequenceStepsMap[sequenceId] ? sequenceStepsMap[sequenceId] : []
+    setSteps(newSteps)
+  }, [sequenceId])
 
   const getStepConfig = (type: StepType) => {
     const configs = {
@@ -142,38 +165,68 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
     )
   }
 
+  const handleNameBlur = () => {
+    if (editedName.trim() && editedName !== sequenceName) {
+      onUpdateName(editedName.trim())
+    } else {
+      setEditedName(sequenceName)
+    }
+    setIsEditingName(false)
+  }
+
+  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleNameBlur()
+    } else if (e.key === 'Escape') {
+      setEditedName(sequenceName)
+      setIsEditingName(false)
+    }
+  }
+
   return (
-    <div className="bg-white p-6 overflow-y-auto relative">
-      <div className="max-w-5xl mx-auto">
+    <div className="bg-white p-4 overflow-y-auto relative">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Monthly Goals Checklist</h2>
-          <p className="text-sm text-gray-500">Build your automated sequence with entry rules, actions, and conditions</p>
+        <div className="mb-4">
+          {isEditingName ? (
+            <input
+              type="text"
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
+              onBlur={handleNameBlur}
+              onKeyDown={handleNameKeyDown}
+              autoFocus
+              className="text-xl font-bold text-gray-900 mb-1 border-b-2 border-indigo-500 focus:outline-none w-full"
+            />
+          ) : (
+            <h2 
+              onClick={() => setIsEditingName(true)}
+              className="text-xl font-bold text-gray-900 mb-1 cursor-pointer hover:text-indigo-600 transition-colors"
+            >
+              {sequenceName}
+            </h2>
+          )}
+          <p className="text-xs text-gray-500">Build your automated sequence with entry rules, actions, and conditions</p>
         </div>
 
         {/* Sequence Flow */}
-        <div className="space-y-4">
+        <div className="space-y-2">
           {/* Entry Rules - Fixed */}
-          <div className="border border-gray-200 rounded-lg p-4 bg-yellow-50">
-            <div className="flex items-center space-x-3 mb-3">
-              <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-white" />
+          <div className="border border-gray-200 rounded-lg p-3 bg-yellow-50">
+            <div className="flex items-center space-x-2 mb-2">
+              <div className="w-6 h-6 bg-yellow-400 rounded flex items-center justify-center">
+                <Zap className="w-4 h-4 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-gray-900">ENTRY RULES</h3>
-                <p className="text-xs text-gray-500">User that should receive checklist (Copy)</p>
+                <h3 className="text-xs font-semibold text-gray-900">ENTRY RULES</h3>
+                <p className="text-xs text-gray-500">When contacts should enter sequence</p>
               </div>
             </div>
             
-            <div className="bg-white rounded-lg p-4 border border-yellow-200">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">WHEN MATCHED</span>
-                  <button className="text-xs text-indigo-600 hover:text-indigo-700">Edit</button>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Select by userID or companyID if whole account should be enrolled
-                </p>
+            <div className="bg-white rounded p-2 border border-yellow-200">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-700">Contact added to CRM or deal stage changed</span>
+                <button className="text-xs text-indigo-600 hover:text-indigo-700">Edit</button>
               </div>
             </div>
           </div>
@@ -187,64 +240,62 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
               <div key={step.id}>
                 {/* Connection Line */}
                 <div className="flex justify-center">
-                  <div className="w-0.5 h-8 bg-gray-300"></div>
+                  <div className="w-0.5 h-4 bg-gray-300"></div>
                 </div>
 
                 {/* Step */}
-                <div className={`border border-gray-200 rounded-lg p-4 ${config.bgColor} relative group`}>
+                <div className={`border border-gray-200 rounded-lg p-3 ${config.bgColor} relative group`}>
                   {/* Step Header */}
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className={`w-8 h-8 ${config.iconBgColor} rounded-lg flex items-center justify-center flex-shrink-0`}>
-                      <Icon className="w-5 h-5 text-white" />
+                  <div className="flex items-center space-x-2 mb-2">
+                    <div className={`w-6 h-6 ${config.iconBgColor} rounded flex items-center justify-center flex-shrink-0`}>
+                      <Icon className="w-4 h-4 text-white" />
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-semibold text-gray-900">{step.title}</h3>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-1.5">
+                        <h3 className="text-xs font-semibold text-gray-900">{step.title}</h3>
                         {config.badge && (
-                          <span className={`flex items-center space-x-1 text-xs font-medium ${config.badgeColor}`}>
-                            <Sparkles className="w-3 h-3" />
+                          <span className={`flex items-center space-x-0.5 text-[10px] font-medium ${config.badgeColor}`}>
+                            <Sparkles className="w-2.5 h-2.5" />
                             <span>{config.badge}</span>
                           </span>
                         )}
                       </div>
-                      {step.content && <p className="text-xs text-gray-500">{step.content}</p>}
+                      {step.content && <p className="text-xs text-gray-500 truncate">{step.content}</p>}
                     </div>
                     
                     {/* Action Buttons - Show on hover */}
-                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center space-x-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => moveStep(index, 'up')}
                         disabled={index === 0}
-                        className="p-1 hover:bg-white rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="p-0.5 hover:bg-white rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                         title="Move up"
                       >
-                        <ChevronUp className="w-4 h-4 text-gray-600" />
+                        <ChevronUp className="w-3.5 h-3.5 text-gray-600" />
                       </button>
                       <button
                         onClick={() => moveStep(index, 'down')}
                         disabled={index === steps.length - 1}
-                        className="p-1 hover:bg-white rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="p-0.5 hover:bg-white rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                         title="Move down"
                       >
-                        <ChevronDown className="w-4 h-4 text-gray-600" />
+                        <ChevronDown className="w-3.5 h-3.5 text-gray-600" />
                       </button>
                       <button
                         onClick={() => removeStep(step.id)}
-                        className="p-1 hover:bg-red-100 rounded transition-colors"
+                        className="p-0.5 hover:bg-red-100 rounded transition-colors"
                         title="Remove step"
                       >
-                        <X className="w-4 h-4 text-red-600" />
+                        <X className="w-3.5 h-3.5 text-red-600" />
                       </button>
                     </div>
                   </div>
                   
                   {/* Step Content */}
-                  <div className={`bg-white rounded-lg p-4 border ${config.borderColor}`}>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700">{step.description}</span>
-                        <button className="text-xs text-indigo-600 hover:text-indigo-700">Edit</button>
-                      </div>
+                  <div className={`bg-white rounded p-2 border ${config.borderColor}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-gray-700 truncate">{step.description}</span>
+                      <button className="text-xs text-indigo-600 hover:text-indigo-700 ml-2 flex-shrink-0">Edit</button>
                     </div>
                   </div>
                 </div>
@@ -253,13 +304,13 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
           })}
 
           {/* Add Step Button */}
-          <div className="flex justify-center pt-4">
+          <div className="flex justify-center pt-2 pb-2">
             <button
               onClick={() => setShowAddStepModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              <Plus className="w-4 h-4" />
-              <span className="text-sm font-medium">Add Step</span>
+              <Plus className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium">Add Step</span>
             </button>
           </div>
         </div>
