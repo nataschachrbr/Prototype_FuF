@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node / JavaScript
+node_modules/
+dist/
+build/
+
+# General
+.env
+.env.*
+
+
