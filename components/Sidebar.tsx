@@ -1,6 +1,6 @@
 'use client'
 
-import { Home, Inbox, Star, CheckCircle, MoreHorizontal, Bell, Settings, GitBranch } from 'lucide-react'
+import { Home, Inbox, Star, CheckCircle, MoreHorizontal, Bell, Settings, GitBranch, Users, Building2 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -21,13 +21,21 @@ export function Sidebar() {
         <Inbox className="w-5 h-5" />
       </Link>
       
-      <button className="w-10 h-10 flex items-center justify-center hover:bg-gray-200 rounded-lg transition-colors">
+      <Link href="/pipelines" className={`w-10 h-10 flex items-center justify-center hover:bg-gray-200 rounded-lg transition-colors ${pathname.startsWith('/pipelines') ? 'bg-gray-200' : ''}`}>
         <Star className="w-5 h-5" />
-      </button>
+      </Link>
       
       <button className="w-10 h-10 flex items-center justify-center hover:bg-gray-200 rounded-lg transition-colors">
         <CheckCircle className="w-5 h-5" />
       </button>
+      
+      <Link href="/people" className={`w-10 h-10 flex items-center justify-center hover:bg-gray-200 rounded-lg transition-colors ${pathname === '/people' ? 'bg-gray-200' : ''}`}>
+        <Users className="w-5 h-5" />
+      </Link>
+      
+      <Link href="/companies" className={`w-10 h-10 flex items-center justify-center hover:bg-gray-200 rounded-lg transition-colors ${pathname === '/companies' ? 'bg-gray-200' : ''}`}>
+        <Building2 className="w-5 h-5" />
+      </Link>
       
       <Link href="/sequences" className={`w-10 h-10 flex items-center justify-center hover:bg-gray-200 rounded-lg transition-colors ${pathname === '/sequences' ? 'bg-gray-200' : ''}`}>
         <GitBranch className="w-5 h-5" />

@@ -10,12 +10,21 @@ import { PrebuiltTemplatesModal } from '@/components/PrebuiltTemplatesModal'
 
 export default function SequencesPage() {
   const [sequences, setSequences] = useState<Sequence[]>([
-    { id: '2', name: 'Standard Outreach', status: 'active', enrolledCount: 24 },
-    { id: '3', name: 'Referral Follow-up', status: 'active', enrolledCount: 8 },
-    { id: '4', name: 'Cold Outreach V2', status: 'draft', enrolledCount: 0 },
-    { id: '5', name: 'Re-engagement', status: 'paused', enrolledCount: 15 },
+    { id: '1', name: 'Major Projects Outreach', status: 'active', enrolledCount: 2 },
+    { id: '2', name: 'Standard Outreach', status: 'active', enrolledCount: 1 },
+    { id: '3', name: 'Procurement Outreach', status: 'active', enrolledCount: 1 },
+    { id: '4', name: 'Healthcare Sector Focus', status: 'active', enrolledCount: 1 },
+    { id: '5', name: 'Energy & Water Focus', status: 'active', enrolledCount: 1 },
+    { id: '6', name: 'Facilities Management Focus', status: 'active', enrolledCount: 1 },
+    { id: '7', name: 'Housing Development Outreach', status: 'active', enrolledCount: 1 },
+    { id: '8', name: 'Partnership Outreach', status: 'active', enrolledCount: 1 },
+    { id: '9', name: 'Technical Specification Focus', status: 'active', enrolledCount: 1 },
+    { id: '10', name: 'Urban Development Outreach', status: 'active', enrolledCount: 1 },
+    { id: '11', name: 'Supply Chain Outreach', status: 'active', enrolledCount: 1 },
+    { id: '12', name: 'Distribution Network Focus', status: 'active', enrolledCount: 1 },
+    { id: '13', name: 'Fit-Out Specialists', status: 'active', enrolledCount: 1 },
   ])
-  const [selectedSequenceId, setSelectedSequenceId] = useState<string | null>('2')
+  const [selectedSequenceId, setSelectedSequenceId] = useState<string | null>('1')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showTemplatesModal, setShowTemplatesModal] = useState(false)
 

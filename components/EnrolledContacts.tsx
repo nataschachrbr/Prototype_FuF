@@ -22,50 +22,184 @@ interface EnrolledContactsProps {
 
 // Store contacts per sequence
 const sequenceContactsMap: { [key: string]: Contact[] } = {
-  '2': [ // Standard Outreach
+  '1': [ // Major Projects Outreach
     {
       id: '1',
-      name: 'Joachim Hofmann',
-      company: 'Vermögen und Bau Baden-Württemberg',
-      dealName: 'University Project',
-      dealLink: '#',
-      currentStep: 'Email sent - waiting for response',
+      name: 'James Robertson',
+      company: 'Balfour Beatty',
+      dealName: 'HS2 Rail Infrastructure Package',
+      dealLink: '/deals/deal-001',
+      currentStep: 'Initial meeting scheduled',
       stepNumber: 2,
       totalSteps: 5,
       status: 'active'
     },
     {
-      id: '2',
-      name: 'Sarah Müller',
-      company: 'Tech Solutions GmbH',
-      dealName: 'Software Implementation',
-      dealLink: '#',
+      id: '6',
+      name: 'Sophie Turner',
+      company: 'Laing O\'Rourke',
+      dealName: 'London Gateway Port Expansion',
+      dealLink: '/deals/deal-006',
       currentStep: 'Initial contact made',
       stepNumber: 1,
       totalSteps: 5,
       status: 'active'
     },
+  ],
+  '2': [ // Standard Outreach
+    {
+      id: '2',
+      name: 'Sarah Mitchell',
+      company: 'Kier Group',
+      dealName: 'M25 Highways Upgrade',
+      dealLink: '/deals/deal-002',
+      currentStep: 'Email sent - waiting for response',
+      stepNumber: 2,
+      totalSteps: 5,
+      status: 'active'
+    },
+  ],
+  '3': [ // Procurement Outreach
     {
       id: '3',
-      name: 'Michael Schmidt',
-      company: 'Innovation Labs',
-      dealName: 'Consulting Services',
-      dealLink: '#',
-      currentStep: 'Follow-up scheduled',
+      name: 'Thomas Harrison',
+      company: 'Morgan Sindall Group',
+      dealName: 'Liverpool Regeneration Project',
+      dealLink: '/deals/deal-003',
+      currentStep: 'Follow-up call completed',
       stepNumber: 3,
       totalSteps: 5,
       status: 'active'
     },
+  ],
+  '4': [ // Healthcare Sector Focus
     {
       id: '4',
-      name: 'Anna Weber',
-      company: 'Digital Dynamics',
-      dealName: 'Marketing Campaign',
-      dealLink: '#',
-      currentStep: 'Completed all steps',
+      name: 'Emily Davies',
+      company: 'Galliford Try',
+      dealName: 'Healthcare Facilities Programme',
+      dealLink: '/deals/deal-004',
+      currentStep: 'Proposal submitted',
+      stepNumber: 4,
+      totalSteps: 5,
+      status: 'active'
+    },
+  ],
+  '5': [ // Energy & Water Focus
+    {
+      id: '5',
+      name: 'Michael O\'Connor',
+      company: 'Costain Group',
+      dealName: 'Thames Water Infrastructure',
+      dealLink: '/deals/deal-005',
+      currentStep: 'Contract negotiation',
       stepNumber: 5,
       totalSteps: 5,
       status: 'completed'
+    },
+  ],
+  '6': [ // Facilities Management Focus
+    {
+      id: '8',
+      name: 'Rachel Williams',
+      company: 'BAM UK & Ireland',
+      dealName: 'University Campus FM Contract',
+      dealLink: '/deals/deal-008',
+      currentStep: 'Site visit arranged',
+      stepNumber: 3,
+      totalSteps: 5,
+      status: 'active'
+    },
+  ],
+  '7': [ // Housing Development Outreach
+    {
+      id: '9',
+      name: 'Oliver Bennett',
+      company: 'Barratt Redrow',
+      dealName: 'Cambridge New Town Development',
+      dealLink: '/deals/deal-009',
+      currentStep: 'Planning approval support',
+      stepNumber: 4,
+      totalSteps: 5,
+      status: 'active'
+    },
+  ],
+  '8': [ // Partnership Outreach
+    {
+      id: '10',
+      name: 'Charlotte Brown',
+      company: 'Persimmon plc',
+      dealName: 'Affordable Housing Partnership',
+      dealLink: '/deals/deal-010',
+      currentStep: 'Partnership agreement drafted',
+      stepNumber: 4,
+      totalSteps: 5,
+      status: 'active'
+    },
+  ],
+  '9': [ // Technical Specification Focus
+    {
+      id: '12',
+      name: 'Lucy Anderson',
+      company: 'Bellway plc',
+      dealName: 'North East Housing Development',
+      dealLink: '/deals/deal-012',
+      currentStep: 'Technical review meeting',
+      stepNumber: 2,
+      totalSteps: 5,
+      status: 'active'
+    },
+  ],
+  '10': [ // Urban Development Outreach
+    {
+      id: '13',
+      name: 'Henry Clarke',
+      company: 'Berkeley Group Holdings',
+      dealName: 'Canary Wharf Mixed-Use Tower',
+      dealLink: '/deals/deal-013',
+      currentStep: 'Design consultation phase',
+      stepNumber: 3,
+      totalSteps: 5,
+      status: 'active'
+    },
+  ],
+  '11': [ // Supply Chain Outreach
+    {
+      id: '15',
+      name: 'George Patterson',
+      company: 'Travis Perkins plc',
+      dealName: 'National Supply Partnership',
+      dealLink: '/deals/deal-015',
+      currentStep: 'Pricing proposal submitted',
+      stepNumber: 4,
+      totalSteps: 5,
+      status: 'active'
+    },
+  ],
+  '12': [ // Distribution Network Focus
+    {
+      id: '16',
+      name: 'Victoria Hughes',
+      company: 'Jewson (Stark Group)',
+      dealName: 'Regional Distribution Agreement',
+      dealLink: '/deals/deal-016',
+      currentStep: 'Initial meeting completed',
+      stepNumber: 2,
+      totalSteps: 5,
+      status: 'active'
+    },
+  ],
+  '13': [ // Fit-Out Specialists
+    {
+      id: '18',
+      name: 'Grace Robinson',
+      company: 'Morgan Sindall Group',
+      dealName: 'Birmingham City Centre Fit-Out',
+      dealLink: '/deals/deal-018',
+      currentStep: 'Detailed quotation phase',
+      stepNumber: 3,
+      totalSteps: 5,
+      status: 'active'
     },
   ]
 }
