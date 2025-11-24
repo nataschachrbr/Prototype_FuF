@@ -2,13 +2,7 @@
 
 import { useState } from 'react'
 import { Plus, Search, GitBranch } from 'lucide-react'
-
-export interface Sequence {
-  id: string
-  name: string
-  status: 'active' | 'draft' | 'paused'
-  enrolledCount: number
-}
+import { Sequence } from '@/lib/sequences'
 
 interface SequencesListProps {
   sequences: Sequence[]

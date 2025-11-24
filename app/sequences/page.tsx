@@ -1,32 +1,32 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Sidebar } from '@/components/Sidebar'
-import { SequencesList, Sequence } from '@/components/SequencesList'
+import { SequencesList } from '@/components/SequencesList'
 import { SequenceBuilder } from '@/components/SequenceBuilder'
 import { EnrolledContacts } from '@/components/EnrolledContacts'
 import { CreateSequenceModal } from '@/components/CreateSequenceModal'
 import { PrebuiltTemplatesModal } from '@/components/PrebuiltTemplatesModal'
+import { Sequence, getAllSequences, saveSequences } from '@/lib/sequences'
 
 export default function SequencesPage() {
-  const [sequences, setSequences] = useState<Sequence[]>([
-    { id: '1', name: 'Major Projects Outreach', status: 'active', enrolledCount: 2 },
-    { id: '2', name: 'Standard Outreach', status: 'active', enrolledCount: 1 },
-    { id: '3', name: 'Procurement Outreach', status: 'active', enrolledCount: 1 },
-    { id: '4', name: 'Healthcare Sector Focus', status: 'active', enrolledCount: 1 },
-    { id: '5', name: 'Energy & Water Focus', status: 'active', enrolledCount: 1 },
-    { id: '6', name: 'Facilities Management Focus', status: 'active', enrolledCount: 1 },
-    { id: '7', name: 'Housing Development Outreach', status: 'active', enrolledCount: 1 },
-    { id: '8', name: 'Partnership Outreach', status: 'active', enrolledCount: 1 },
-    { id: '9', name: 'Technical Specification Focus', status: 'active', enrolledCount: 1 },
-    { id: '10', name: 'Urban Development Outreach', status: 'active', enrolledCount: 1 },
-    { id: '11', name: 'Supply Chain Outreach', status: 'active', enrolledCount: 1 },
-    { id: '12', name: 'Distribution Network Focus', status: 'active', enrolledCount: 1 },
-    { id: '13', name: 'Fit-Out Specialists', status: 'active', enrolledCount: 1 },
-  ])
+  const [sequences, setSequences] = useState<Sequence[]>([])
   const [selectedSequenceId, setSelectedSequenceId] = useState<string | null>('1')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showTemplatesModal, setShowTemplatesModal] = useState(false)
+
+  // Load sequences on mount
+  useEffect(() => {
+    const loadedSequences = getAllSequences()
+    setSequences(loadedSequences)
+  }, [])
+
+  // Save sequences whenever they change
+  useEffect(() => {
+    if (sequences.length > 0) {
+      saveSequences(sequences)
+    }
+  }, [sequences])
 
   const handleCreateNew = () => {
     setShowCreateModal(true)
