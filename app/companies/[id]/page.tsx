@@ -27,9 +27,6 @@ export default function CompanyDetailsPage() {
 
   const company = companiesData.find((c) => c.id === id)
   const [favoriteContactIds, setFavoriteContactIds] = useState<Set<string>>(new Set())
-  const [contactNotes, setContactNotes] = useState<Record<string, string>>({})
-
-  const CONTACT_NOTES_STORAGE_KEY = 'contactNotes'
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -43,31 +40,6 @@ export default function CompanyDetailsPage() {
       }
     }
   }, [])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const stored = window.localStorage.getItem(CONTACT_NOTES_STORAGE_KEY)
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as Record<string, string>
-        setContactNotes(parsed)
-      } catch {
-        setContactNotes({})
-      }
-    } else {
-      setContactNotes({})
-    }
-  }, [])
-
-  const handleNoteChange = (personId: string, value: string) => {
-    setContactNotes((prev) => {
-      const next = { ...prev, [personId]: value }
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(CONTACT_NOTES_STORAGE_KEY, JSON.stringify(next))
-      }
-      return next
-    })
-  }
 
   const toggleFavoriteContact = (personId: string) => {
     setFavoriteContactIds((prev) => {
@@ -127,6 +99,11 @@ export default function CompanyDetailsPage() {
 
   const isBalfourBeatty =
     company.id === '1' || company.name.toLowerCase().includes('balfour beatty')
+
+  const openDealForProject = (project: Project) => {
+    const basePath = project.id === '1' || project.id === '2' ? '/pipelines/deals' : '/pipelines/deals-stages'
+    router.push(`${basePath}/${project.id}`)
+  }
 
   const openCompanyByName = (name: string) => {
     const match = companiesData.find((c) => c.name === name)
@@ -643,49 +620,174 @@ export default function CompanyDetailsPage() {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Company information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center space-x-3">
-                  <MapPin className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-gray-500">Location</div>
-                    <div className="text-sm font-medium text-gray-900">{company.location}</div>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Users className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-gray-500">Employees</div>
-                    <div className="text-sm font-medium text-gray-900">
-                      {company.employees.toLocaleString()}
+            {isBalfourBeatty ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Company information */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Company information</h2>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="flex items-center space-x-3">
+                      <MapPin className="w-5 h-5 text-gray-400" />
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-gray-500">Location</div>
+                        <div className="text-sm font-medium text-gray-900">{company.location}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Users className="w-5 h-5 text-gray-400" />
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-gray-500">Employees</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {company.employees.toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Tag className="w-5 h-5 text-gray-400" />
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-gray-500">Segment</div>
+                        <div className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                          {company.segment}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col space-y-2">
+                      <span className="text-xs uppercase tracking-wide text-gray-500">Keywords</span>
+                      <div className="flex flex-wrap gap-2">
+                        {company.keywords.map((keyword, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700"
+                          >
+                            {keyword}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <Tag className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-gray-500">Segment</div>
-                    <div className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
-                      {company.segment}
+
+                {/* Balfour Beatty project profile (pie chart) */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-900">Project profile</h2>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Quick view of where Balfour Beatty most often shows up as contractor &mdash; for
+                        fast qualification, not exact reporting.
+                      </p>
                     </div>
+                    <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">
+                      Prototype
+                    </span>
                   </div>
-                </div>
-                <div className="flex flex-col space-y-2">
-                  <span className="text-xs uppercase tracking-wide text-gray-500">Keywords</span>
-                  <div className="flex flex-wrap gap-2">
-                    {company.keywords.map((keyword, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700"
-                      >
-                        {keyword}
-                      </span>
-                    ))}
+
+                  <div className="flex items-center gap-6">
+                    {/* Pie chart */}
+                    <div className="relative">
+                      <div
+                        className="w-32 h-32 rounded-full shadow-inner border border-gray-100"
+                        style={{
+                          background:
+                            'conic-gradient(#4f46e5 0 40%, #6366f1 40% 70%, #818cf8 70% 85%, #a5b4fc 85% 95%, #e0e7ff 95% 100%)',
+                        }}
+                      />
+                      <div className="absolute inset-4 rounded-full bg-white flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">
+                            Project mix
+                          </div>
+                          <div className="text-xs text-gray-400">UK focus</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Legend */}
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
+                          <span className="text-xs text-gray-700">Rail &amp; Transport</span>
+                        </div>
+                        <span className="text-xs font-medium text-gray-900">40%</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                          <span className="text-xs text-gray-700">Highways &amp; Infrastructure</span>
+                        </div>
+                        <span className="text-xs font-medium text-gray-900">30%</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-400" />
+                          <span className="text-xs text-gray-700">Commercial &amp; Mixed-Use</span>
+                        </div>
+                        <span className="text-xs font-medium text-gray-900">15%</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-300" />
+                          <span className="text-xs text-gray-700">Healthcare</span>
+                        </div>
+                        <span className="text-xs font-medium text-gray-900">10%</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-200" />
+                          <span className="text-xs text-gray-700">Education</span>
+                        </div>
+                        <span className="text-xs font-medium text-gray-900">5%</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Company information</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-3">
+                    <MapPin className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-gray-500">Location</div>
+                      <div className="text-sm font-medium text-gray-900">{company.location}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Users className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-gray-500">Employees</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {company.employees.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Tag className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-gray-500">Segment</div>
+                      <div className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        {company.segment}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col space-y-2">
+                    <span className="text-xs uppercase tracking-wide text-gray-500">Keywords</span>
+                    <div className="flex flex-wrap gap-2">
+                      {company.keywords.map((keyword, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700"
+                        >
+                          {keyword}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div id="deals" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
@@ -736,21 +838,27 @@ export default function CompanyDetailsPage() {
                       {projectsWithContacts.map(({ project, contact }) => (
                         <tr key={project.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-4 py-3">
-                            <div className="flex items-center space-x-3">
-                              <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-indigo-500 to-sky-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                                {company.name
-                                  .split(' ')
-                                  .slice(0, 2)
-                                  .map((n) => n[0])
-                                  .join('')}
-                              </div>
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">
-                                  {project.name}
+                            <button
+                              type="button"
+                              onClick={() => openDealForProject(project)}
+                              className="w-full text-left"
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-indigo-500 to-sky-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                                  {company.name
+                                    .split(' ')
+                                    .slice(0, 2)
+                                    .map((n) => n[0])
+                                    .join('')}
                                 </div>
-                                <div className="text-xs text-gray-500">{company.location}</div>
+                                <div>
+                                  <div className="text-sm font-medium text-indigo-700 hover:underline">
+                                    {project.name}
+                                  </div>
+                                  <div className="text-xs text-gray-500">{company.location}</div>
+                                </div>
                               </div>
-                            </div>
+                            </button>
                           </td>
                           <td className="px-4 py-3">
                             <div className="text-sm text-gray-900">{project.role}</div>
@@ -809,6 +917,7 @@ export default function CompanyDetailsPage() {
               )}
             </div>
 
+
             <div className="space-y-4">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -841,6 +950,9 @@ export default function CompanyDetailsPage() {
                           </th>
                           <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                             Stage
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            Sequence
                           </th>
                           <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                             Last activity
@@ -876,9 +988,13 @@ export default function CompanyDetailsPage() {
                               </td>
                               <td className="px-3 py-3">
                                 {linkedProject ? (
-                                  <div className="text-sm font-medium text-gray-900 truncate">
+                                  <button
+                                    type="button"
+                                    onClick={() => openDealForProject(linkedProject)}
+                                    className="text-sm font-medium text-indigo-700 hover:underline truncate"
+                                  >
                                     {linkedProject.name}
-                                  </div>
+                                  </button>
                                 ) : (
                                   <span className="text-xs text-gray-400">No deal linked</span>
                                 )}
@@ -895,6 +1011,51 @@ export default function CompanyDetailsPage() {
                                   </span>
                                 ) : (
                                   <span className="text-xs text-gray-400">—</span>
+                                )}
+                              </td>
+                              <td className="px-3 py-3">
+                                {person.sequenceEnrollment ? (
+                                  <div className="space-y-1">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs font-medium text-gray-900 truncate max-w-[140px]">
+                                        {person.sequenceEnrollment.sequenceName}
+                                      </span>
+                                      <span
+                                        className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize ${
+                                          person.sequenceEnrollment.status === 'active'
+                                            ? 'bg-emerald-100 text-emerald-700'
+                                            : person.sequenceEnrollment.status === 'completed'
+                                            ? 'bg-indigo-100 text-indigo-700'
+                                            : 'bg-yellow-100 text-yellow-700'
+                                        }`}
+                                      >
+                                        {person.sequenceEnrollment.status}
+                                      </span>
+                                    </div>
+                                    <div className="text-[11px] text-gray-500 truncate">
+                                      {person.sequenceEnrollment.currentStep}
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                                        <div
+                                          className="bg-indigo-600 h-1.5 rounded-full"
+                                          style={{
+                                            width: `${
+                                              (person.sequenceEnrollment.stepNumber /
+                                                person.sequenceEnrollment.totalSteps) *
+                                              100
+                                            }%`,
+                                          }}
+                                        />
+                                      </div>
+                                      <span className="text-[10px] text-gray-500 whitespace-nowrap">
+                                        {person.sequenceEnrollment.stepNumber}/
+                                        {person.sequenceEnrollment.totalSteps}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-400">Not in sequence</span>
                                 )}
                               </td>
                               <td className="px-3 py-3">
@@ -957,33 +1118,6 @@ export default function CompanyDetailsPage() {
                 )}
               </div>
 
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Quick contact notes</h3>
-                {relatedContacts.length === 0 ? (
-                  <p className="text-xs text-gray-500">
-                    Start by adding contacts to this company to capture notes.
-                  </p>
-                ) : (
-                  <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
-                    {relatedContacts.map((person) => (
-                      <div key={person.id} className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-gray-700 truncate">
-                            {person.name}
-                          </span>
-                        </div>
-                        <input
-                          type="text"
-                          value={contactNotes[person.id] ?? ''}
-                          onChange={(e) => handleNoteChange(person.id, e.target.value)}
-                          placeholder="Add note..."
-                          className="w-full rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
               {isBalfourBeatty && <BalfourBeattyPartnerNetwork />}
             </div>
           </div>

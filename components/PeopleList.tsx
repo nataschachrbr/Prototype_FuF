@@ -172,6 +172,11 @@ export function PeopleList() {
     })
   }
 
+  const openDealForProject = (project: Project) => {
+    const basePath = project.id === '1' || project.id === '2' ? '/pipelines/deals' : '/pipelines/deals-stages'
+    router.push(`${basePath}/${project.id}`)
+  }
+
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
@@ -685,8 +690,16 @@ export function PeopleList() {
                                 {projects.map((project) => (
                                   <tr key={project.id}>
                                     <td className="px-3 py-2 text-sm text-gray-900">
-                                      <div className="font-medium truncate">{project.name}</div>
-                                      <div className="text-xs text-gray-500 mt-0.5">{project.value}</div>
+                                      <button
+                                        type="button"
+                                        onClick={() => openDealForProject(project)}
+                                        className="w-full text-left"
+                                      >
+                                        <div className="font-medium text-indigo-700 hover:underline truncate">
+                                          {project.name}
+                                        </div>
+                                        <div className="text-xs text-gray-500 mt-0.5">{project.value}</div>
+                                      </button>
                                     </td>
                                     <td className="px-3 py-2 text-sm">
                                       <span
