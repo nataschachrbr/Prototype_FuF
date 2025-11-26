@@ -6,57 +6,105 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
-// Mock deal data
+// Mock deal data – aligned with the 3 outreach deals in the pipeline and
+// matching contacts/companies from the People and Companies pages.
 const mockDealData: Record<string, any> = {
-  '1': {
-    id: '1',
-    title: 'Comprehensive renovation of institute buildings',
-    subtitle: 'Universität Ulm - Festpunkt 025',
-    company: 'Vermögen und Bau Baden-Württemberg, Amt Ulm',
-    value: '€250,000',
-    stage: 'Qualification',
-    // Outreach objectives data
+  // Deal 3 – HS2 Rail Infrastructure Package (Balfour Beatty / James Robertson)
+  '3': {
+    id: '3',
+    title: 'HS2 Rail Infrastructure Package',
+    subtitle: 'Major rail infrastructure works',
+    company: 'Balfour Beatty',
+    value: '£4,200,000',
+    stage: 'Outreach & Meeting Booking',
     outreach: {
       readinessStatus: 'not-ready', // not-ready | ready | in-progress
-      readinessReason: 'Architect won the competition but has not begun the schematic design phase. No renderings or facade-related design outputs exist yet. The facade is not under active development, making outreach premature at this stage.',
-      readyTriggers: null, // Will be populated when status changes to ready
+      readinessReason:
+        'Project is in early design. Key stakeholders on the rail package are still aligning scope and budget, so outreach timing is premature.',
+      readyTriggers: null,
       primaryContact: {
-        name: 'Joachim Hofmann',
-        role: 'Head of Structural Engineering',
-        company: 'Vermögen und Bau Baden-Württemberg, Amt Ulm',
-        isNew: false, // Flag to track if this is a newly discovered contact
+        name: 'James Robertson',
+        role: 'Head of Infrastructure Projects',
+        company: 'Balfour Beatty',
+        isNew: false,
       },
       sequence: null,
       personalization: {
         isReady: true,
-        summary: 'Project-specific intro mentioning Universität Ulm renovation and sustainable façade requirements.',
-      },
-      sequenceStatus: 'not-started', // not-started | running | completed
-      contactAddedToSequence: false,
-      contactConfirmed: false, // Track if user confirmed adding the contact
-      awaitingSequenceConfirmation: false, // Track if we're waiting for user to confirm sequence
-      sources: [], // Sources will be populated when new information is discovered
-    },
-  },
-  '2': {
-    id: '2',
-    title: 'Modern Office Campus Development',
-    subtitle: 'Westside Business District',
-    company: 'Meridian Properties & Investors',
-    value: '€850,000',
-    stage: 'Outreach & Meeting Booking',
-    // Outreach objectives data
-    outreach: {
-      readinessScore: 35,
-      isReady: false,
-      readinessReason: 'Project is in very early concept phase. Architect not yet appointed. Outreach timing premature.',
-      primaryContact: null,
-      sequence: null,
-      personalization: {
-        isReady: false,
-        summary: null,
+        summary:
+          'Intro tailored to UK rail infrastructure and long-term framework opportunities with Balfour Beatty.',
       },
       sequenceStatus: 'not-started',
+      contactAddedToSequence: false,
+      contactConfirmed: false,
+      awaitingSequenceConfirmation: false,
+      sources: [],
+    },
+  },
+
+  // Deal 4 – M25 Highways Upgrade (Kier Group / Sarah Mitchell)
+  '4': {
+    id: '4',
+    title: 'M25 Highways Upgrade',
+    subtitle: 'Strategic road network upgrades',
+    company: 'Kier Group',
+    value: '£8,100,000',
+    stage: 'Outreach & Meeting Booking',
+    outreach: {
+      readinessStatus: 'not-ready',
+      readinessReason:
+        'Commercial structure and delivery partners are still being finalised. Key specification work has not started yet.',
+      readyTriggers: null,
+      primaryContact: {
+        name: 'Sarah Mitchell',
+        role: 'Commercial Director',
+        company: 'Kier Group',
+        isNew: false,
+      },
+      sequence: null,
+      personalization: {
+        isReady: true,
+        summary:
+          'Commercially focused intro for UK highways work, highlighting risk, delivery certainty, and cost transparency.',
+      },
+      sequenceStatus: 'not-started',
+      contactAddedToSequence: false,
+      contactConfirmed: false,
+      awaitingSequenceConfirmation: false,
+      sources: [],
+    },
+  },
+
+  // Deal 5 – Healthcare Facilities Programme (Galliford Try / Emily Davies)
+  '5': {
+    id: '5',
+    title: 'Healthcare Facilities Programme',
+    subtitle: 'Acute & community healthcare projects',
+    company: 'Galliford Try',
+    value: '£2,900,000',
+    stage: 'Outreach & Meeting Booking',
+    outreach: {
+      readinessStatus: 'not-ready',
+      readinessReason:
+        'Clinical design brief and estate strategy are still being defined; envelopes and materials are not yet under discussion.',
+      readyTriggers: null,
+      primaryContact: {
+        name: 'Emily Davies',
+        role: 'Project Director - Buildings',
+        company: 'Galliford Try',
+        isNew: false,
+      },
+      sequence: null,
+      personalization: {
+        isReady: true,
+        summary:
+          'Healthcare-focused opener, referencing infection control, lifecycle cost, and programme-critical delivery.',
+      },
+      sequenceStatus: 'not-started',
+      contactAddedToSequence: false,
+      contactConfirmed: false,
+      awaitingSequenceConfirmation: false,
+      sources: [],
     },
   },
 }

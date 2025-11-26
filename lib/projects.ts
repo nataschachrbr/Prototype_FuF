@@ -1,4 +1,4 @@
-export type ProjectStatus = 'new' | 'pipeline' | 'closed_won'
+export type ProjectStatus = 'new' | 'pipeline' | 'assessment' | 'closed_won'
 
 export interface Project {
   id: string
@@ -8,55 +8,67 @@ export interface Project {
   companyName: string
   // Optional: primary contact this project is most closely related to
   primaryContactId?: string
+  // Label for the deal stage shown in list UIs (e.g. "Schedule meeting", "Assessment")
+  stageLabel: string
   lastActivity: string
 }
 
-// Centralised mocked projects so company and people views stay in sync
+// Centralised mocked projects so company and people views stay in sync.
+// This is intentionally limited to the 5 deals that exist in the pipeline UI,
+// so only those companies show related deals.
 const allProjects: Project[] = [
-  // Balfour Beatty
+  // Qualification stage (Kontaktrecherche)
   {
-    id: 'bb-health-upgrade',
-    name: 'Balfour Beatty Healthcare Facilities Upgrade',
-    value: '£2.8M',
-    status: 'new',
-    companyName: 'Balfour Beatty',
-    primaryContactId: '1', // James Robertson
-    lastActivity: 'Intro call completed 3 days ago',
+    id: '1',
+    name: 'Liverpool Regeneration Project',
+    value: '£6.7M',
+    status: 'assessment', // treated visually like pipeline
+    companyName: 'Morgan Sindall Group',
+    primaryContactId: '3', // Thomas Harrison
+    stageLabel: 'Qualification',
+    lastActivity: '31 Jan 2025, 13:12',
   },
   {
-    id: 'bb-city-redev',
-    name: 'Balfour Beatty City Centre Redevelopment',
-    value: '£5.2M',
-    status: 'pipeline',
-    companyName: 'Balfour Beatty',
-    primaryContactId: '17', // Alexander Scott
-    lastActivity: 'Technical scope shared last week',
-  },
-  {
-    id: 'bb-resi-phase1',
-    name: 'Balfour Beatty Residential Scheme Phase 1',
-    value: '£12.4M',
-    status: 'closed_won',
-    companyName: 'Balfour Beatty',
-    lastActivity: 'Contract signed 2 months ago',
+    id: '2',
+    name: 'North East Housing Development',
+    value: '£4.4M',
+    status: 'assessment',
+    companyName: 'Bellway plc',
+    primaryContactId: '12', // Lucy Anderson
+    stageLabel: 'Qualification',
+    lastActivity: 'Site visit completed yesterday',
   },
 
-  // Example projects for other companies (not yet tied to specific contacts)
+  // Outreach stage (Terminvereinbarung)
   {
-    id: 'kier-m25-upgrade',
-    name: 'Kier Group M25 Highways Upgrade',
+    id: '3',
+    name: 'HS2 Rail Infrastructure Package',
+    value: '£4.2M',
+    status: 'pipeline',
+    companyName: 'Balfour Beatty',
+    primaryContactId: '1', // James Robertson
+    stageLabel: 'Outreach',
+    lastActivity: '31 Jan 2025, 13:12',
+  },
+  {
+    id: '4',
+    name: 'M25 Highways Upgrade',
     value: '£8.1M',
     status: 'pipeline',
     companyName: 'Kier Group',
-    lastActivity: 'Commercial terms under review',
+    primaryContactId: '2', // Sarah Mitchell
+    stageLabel: 'Outreach',
+    lastActivity: '31 Jan 2025, 13:12',
   },
   {
-    id: 'morgan-liverpool-regen',
-    name: 'Morgan Sindall Liverpool Regeneration',
-    value: '£6.7M',
-    status: 'new',
-    companyName: 'Morgan Sindall Group',
-    lastActivity: 'Initial proposal sent',
+    id: '5',
+    name: 'Healthcare Facilities Programme',
+    value: '£2.9M',
+    status: 'pipeline',
+    companyName: 'Galliford Try',
+    primaryContactId: '4', // Emily Davies
+    stageLabel: 'Outreach',
+    lastActivity: '31 Jan 2025, 13:12',
   },
 ]
 

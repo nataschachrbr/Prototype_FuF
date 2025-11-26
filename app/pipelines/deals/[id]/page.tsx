@@ -96,58 +96,65 @@ function getRecommendedSequence(contact: ContactInfo, project: ProjectInfo): {
 
 // Mock deal data - in a real app this would come from an API
 const mockDealData: Record<string, any> = {
+  // Deal 1 – Liverpool Regeneration Project (Morgan Sindall Group / Thomas Harrison)
   '1': {
     id: '1',
-    title: 'Comprehensive renovation of institute buildings',
-    subtitle: 'Universität Ulm - Festpunkt 025',
-    company: 'Vermögen und Bau Baden-Württemberg, Amt Ulm',
-    value: '€250,000',
-    stage: 'Outreach & Meeting Booking',
+    title: 'Liverpool Regeneration Project',
+    subtitle: 'City centre mixed-use regeneration',
+    company: 'Morgan Sindall Group',
+    value: '£6,700,000',
+    stage: 'Qualification',
     status: 'healthy',
-    owner: 'Sarah Mueller',
-    createdDate: 'Oct 15, 2024',
+    owner: 'Emma Thompson',
+    createdDate: 'Jan 15, 2025',
     lastActivity: '2 hours ago',
-    closeDate: 'Dec 31, 2024',
+    closeDate: 'Oct 31, 2025',
     probability: 35,
-    tags: ['Public Sector', 'Large Project', 'Architecture'],
-    description: 'A major refurbishment project is planned for the institute buildings at Albert-Einstein-Allee 11 in Ulm, known as "Universität Ulm - Sanierung von Institutsgebäuden - Festpunkt 025." The project involves comprehensive renovation work on multiple institute buildings to modernize facilities and improve energy efficiency.',
-    architect: 'DEGLE.DEGLE Architekten',
+    tags: ['Urban regeneration', 'Major contractor', 'Mixed-use'],
+    description:
+      'Large-scale regeneration of central Liverpool including commercial, residential, and public realm works. Early-stage discussions around envelope performance, phasing, and logistics are underway.',
+    architect: 'To be confirmed',
     // Contact and project info for sequence recommendation
     contact: {
-      role: 'architect',
-      name: 'Joachim Hofmann'
+      role: 'head-of-procurement',
+      name: 'Thomas Harrison',
+      company: 'Morgan Sindall Group',
     },
     project: {
       phase: 'design-phase',
-      productType: 'facade'
-    }
+      productType: 'facade',
+    },
   },
+
+  // Deal 2 – North East Housing Development (Bellway plc / Lucy Anderson)
   '2': {
     id: '2',
-    title: 'Modern Office Campus Development',
-    subtitle: 'Westside Business District',
-    company: 'Meridian Properties & Investors',
-    value: '€850,000',
-    stage: 'Outreach & Meeting Booking',
+    title: 'North East Housing Development',
+    subtitle: 'Regional residential scheme',
+    company: 'Bellway plc',
+    value: '£4,400,000',
+    stage: 'Qualification',
     status: 'slow-moving',
-    owner: 'Natascha Christ',
-    createdDate: 'Nov 18, 2024',
+    owner: 'David Clarke',
+    createdDate: 'Jan 22, 2025',
     lastActivity: '3 days ago',
-    closeDate: 'Mar 31, 2025',
-    probability: 15,
-    tags: ['Commercial', 'Early Stage', 'Building Radar'],
-    description: 'New 12-story office campus development identified through building radar monitoring. The project features modern workspace design with sustainable building practices. Currently in very early design phase. Architect has not yet been appointed. Building owner and investor group have been identified as stakeholders.',
+    closeDate: 'Dec 15, 2025',
+    probability: 20,
+    tags: ['Residential', 'Housebuilder', 'Specification'],
+    description:
+      'New-build housing development in the North East region. Site strategy is confirmed, but technical specification and supplier selection are still open.',
     architect: 'Not yet known',
     architectUnknown: true,
     // Contact and project info for sequence recommendation
     contact: {
-      role: 'architect',
-      name: 'Not yet known'
+      role: 'technical-director',
+      name: 'Lucy Anderson',
+      company: 'Bellway plc',
     },
     project: {
       phase: 'design-phase',
-      productType: 'facade'
-    }
+      productType: 'facade',
+    },
   },
 }
 

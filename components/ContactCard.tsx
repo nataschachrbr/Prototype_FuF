@@ -4,11 +4,13 @@ import { useState, useEffect, useRef } from 'react'
 import { Mail, Phone, Building2, Edit2, MoreVertical, Users, Copy, Archive, Trash2, Star } from 'lucide-react'
 
 const DEAL_CONTACT_ID = 'deal-primary-contact'
+const CONTACT_NOTES_STORAGE_KEY = 'contactNotes'
 
 export function ContactCard() {
   const [showMenu, setShowMenu] = useState<boolean>(false)
   const [isFavorite, setIsFavorite] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const [note, setNote] = useState('')
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -38,6 +40,22 @@ export function ContactCard() {
     }
   }, [])
 
+  // Load note for this deal contact
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const stored = window.localStorage.getItem(CONTACT_NOTES_STORAGE_KEY)
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as Record<string, string>
+        setNote(parsed[DEAL_CONTACT_ID] ?? '')
+      } catch {
+        setNote('')
+      }
+    } else {
+      setNote('')
+    }
+  }, [])
+
   const toggleFavorite = () => {
     setIsFavorite(prev => {
       const next = !prev
@@ -61,6 +79,22 @@ export function ContactCard() {
       }
       return next
     })
+  }
+
+  const handleNoteChange = (value: string) => {
+    setNote(value)
+    if (typeof window === 'undefined') return
+    let current: Record<string, string> = {}
+    const stored = window.localStorage.getItem(CONTACT_NOTES_STORAGE_KEY)
+    if (stored) {
+      try {
+        current = JSON.parse(stored) as Record<string, string>
+      } catch {
+        current = {}
+      }
+    }
+    current[DEAL_CONTACT_ID] = value
+    window.localStorage.setItem(CONTACT_NOTES_STORAGE_KEY, JSON.stringify(current))
   }
 
   return (
@@ -104,13 +138,13 @@ export function ContactCard() {
           <div className="flex items-start space-x-4">
             {/* Avatar */}
             <div className="w-14 h-14 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-lg font-semibold text-indigo-600">JH</span>
+              <span className="text-lg font-semibold text-indigo-600">TH</span>
             </div>
             
             {/* Contact Details */}
             <div className="flex-1 pr-12">
               <div className="flex items-center space-x-2 mb-1">
-                <h3 className="text-lg font-semibold text-gray-900">Joachim Hofmann</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Thomas Harrison</h3>
                 <Building2 className="w-4 h-4 text-gray-400" />
                 <Users className="w-4 h-4 text-gray-400" />
                 <button
@@ -128,22 +162,45 @@ export function ContactCard() {
               </div>
               
               <p className="text-sm text-indigo-600 mb-3">
-                Vermögen und Bau Baden-Württemberg, Amt Ulm
+                Morgan Sindall Group
               </p>
               
               <div className="flex items-center space-x-2 mb-3">
                 <Building2 className="w-4 h-4 text-gray-500" />
-                <span className="text-sm text-gray-700">Head of Structural Engineering for the University</span>
+                <span className="text-sm text-gray-700">Head of Procurement · Major regeneration projects</span>
               </div>
               
               <div className="flex items-center space-x-2 mb-2">
                 <Mail className="w-4 h-4 text-gray-500" />
-                <button className="text-sm text-gray-400 hover:text-indigo-600">Add E-mail</button>
+                <a
+                  href="mailto:thomas.harrison@morgansindall.com"
+                  className="text-sm text-gray-700 hover:text-indigo-600"
+                >
+                  thomas.harrison@morgansindall.com
+                </a>
               </div>
               
               <div className="flex items-center space-x-2">
                 <Phone className="w-4 h-4 text-gray-500" />
-                <a href="tel:0731/50-28900" className="text-sm text-gray-700 hover:text-indigo-600">0731/50-28900</a>
+                <a
+                  href="tel:+442073079200"
+                  className="text-sm text-gray-700 hover:text-indigo-600"
+                >
+                  +44 20 7307 9200
+                </a>
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-xs font-medium text-gray-500 mb-1">
+                  Note
+                </label>
+                <textarea
+                  value={note}
+                  onChange={(e) => handleNoteChange(e.target.value)}
+                  placeholder="Add note about this contact..."
+                  rows={3}
+                  className="w-full border border-gray-200 rounded-md px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 resize-none bg-white"
+                />
               </div>
             </div>
           </div>

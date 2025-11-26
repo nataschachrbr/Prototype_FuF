@@ -25,6 +25,9 @@ export function PeopleList() {
   const [expandedContactIds, setExpandedContactIds] = useState<Set<string>>(new Set())
   const [favoriteContactIds, setFavoriteContactIds] = useState<Set<string>>(new Set())
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+  const [contactNotes, setContactNotes] = useState<Record<string, string>>({})
+
+  const CONTACT_NOTES_STORAGE_KEY = 'contactNotes'
 
   // UK Construction Industry Contacts
   const people: Person[] = peopleData
@@ -32,16 +35,56 @@ export function PeopleList() {
   // Load favorite contacts from localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const stored = window.localStorage.getItem('favoriteContacts')
-    if (stored) {
-      try {
-        const parsed: string[] = JSON.parse(stored)
-        setFavoriteContactIds(new Set(parsed))
-      } catch {
-        // ignore
+    const load = () => {
+      const stored = window.localStorage.getItem('favoriteContacts')
+      if (stored) {
+        try {
+          const parsed: string[] = JSON.parse(stored)
+          setFavoriteContactIds(new Set(parsed))
+        } catch {
+          // ignore
+        }
+      } else {
+        setFavoriteContactIds(new Set())
       }
     }
+    load()
+
+    // Keep in sync with changes from other pages/tabs
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'favoriteContacts') {
+        load()
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
   }, [])
+
+  // Load contact notes from localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const stored = window.localStorage.getItem(CONTACT_NOTES_STORAGE_KEY)
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as Record<string, string>
+        setContactNotes(parsed)
+      } catch {
+        setContactNotes({})
+      }
+    } else {
+      setContactNotes({})
+    }
+  }, [])
+
+  const handleNoteChange = (personId: string, value: string) => {
+    setContactNotes(prev => {
+      const next = { ...prev, [personId]: value }
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(CONTACT_NOTES_STORAGE_KEY, JSON.stringify(next))
+      }
+      return next
+    })
+  }
 
   // Extract unique values for filters
   const jobTitles = Array.from(new Set(people.map(p => p.jobTitle)))
@@ -476,6 +519,7 @@ export function PeopleList() {
               <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Sequence</th>
               <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Phone</th>
               <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+              <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Notes</th>
             </tr>
           </thead>
           <tbody>
@@ -516,24 +560,23 @@ export function PeopleList() {
                         </div>
                         <div>
                           <div className="font-medium text-gray-900">{person.name}</div>
-                            <div className="text-xs text-gray-500">{person.location}</div>
-                            {hasProjects && (
-                              <div className="mt-1">
-                                <button
-                                  type="button"
-                                  onClick={() => toggleExpanded(person.id)}
-                                  className="inline-flex items-center space-x-1 text-xs font-medium text-indigo-600 hover:text-indigo-700"
-                                >
-                                  <span>{projects.length} related deals</span>
-                                  {isExpanded ? (
-                                    <ChevronDownIcon className="w-3 h-3" />
-                                  ) : (
-                                    <ChevronRight className="w-3 h-3" />
-                                  )}
-                                </button>
-                              </div>
-                            )}
-                          </div>
+                          <div className="text-xs text-gray-500">{person.location}</div>
+                          {hasProjects && (
+                            <div className="mt-1">
+                              <button
+                                type="button"
+                                onClick={() => toggleExpanded(person.id)}
+                                className="inline-flex items-center space-x-1 text-xs font-medium text-indigo-600 hover:text-indigo-700"
+                              >
+                                <span>{projects.length} related deals</span>
+                                {isExpanded ? (
+                                  <ChevronDownIcon className="w-3 h-3" />
+                                ) : (
+                                  <ChevronRight className="w-3 h-3" />
+                                )}
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -601,10 +644,21 @@ export function PeopleList() {
                     <span>{person.email}</span>
                   </a>
                     </td>
+                    <td className="py-4 px-4 text-sm text-gray-700 align-middle">
+                      <div className="flex items-center h-full">
+                        <input
+                          type="text"
+                          value={contactNotes[person.id] ?? ''}
+                          onChange={(e) => handleNoteChange(person.id, e.target.value)}
+                          placeholder="Add note..."
+                          className="w-full rounded-md px-0 py-0 text-sm text-gray-700 focus:outline-none focus:ring-0 focus:border-transparent bg-transparent placeholder:text-gray-400"
+                        />
+                      </div>
+                    </td>
                   </tr>
                   {isExpanded && projects.length > 0 && (
                     <tr className="bg-gray-50/60">
-                      <td colSpan={7} className="py-3 px-4">
+                      <td colSpan={9} className="py-3 px-4">
                         <div className="border border-gray-200 rounded-lg bg-white p-3">
                           <div className="flex items-center space-x-2 mb-3">
                             <Briefcase className="w-4 h-4 text-gray-400" />
@@ -641,10 +695,16 @@ export function PeopleList() {
                                             ? 'bg-sky-100 text-sky-700'
                                             : project.status === 'pipeline'
                                             ? 'bg-amber-100 text-amber-700'
+                                            : project.status === 'assessment'
+                                            ? 'bg-gray-100 text-gray-700'
                                             : 'bg-emerald-100 text-emerald-700'
                                         }`}
                                       >
-                                        {project.status === 'closed_won' ? 'closed won' : project.status}
+                                        {project.status === 'closed_won'
+                                          ? 'closed won'
+                                          : project.status === 'assessment'
+                                          ? 'assessment'
+                                          : project.status}
                                       </span>
                                     </td>
                                     <td className="px-3 py-2 text-xs text-gray-600">

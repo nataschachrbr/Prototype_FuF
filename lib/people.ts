@@ -10,6 +10,8 @@ export interface Person {
   email: string
   location: string
   segment: string
+  // Optional freeform note stored for this contact (kept in localStorage at runtime)
+  note?: string
   sequenceEnrollment?: {
     sequenceName: string
     currentStep: string

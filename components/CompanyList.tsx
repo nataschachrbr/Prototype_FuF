@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, ChevronDown, Building2, Plus, User, ChevronRight, ChevronDown as ChevronDownIcon, Briefcase, Star } from 'lucide-react'
-import { peopleData } from '@/lib/people'
+import { peopleData, Person } from '@/lib/people'
 import { getProjectsForCompany, Project } from '@/lib/projects'
+import { ImportCompaniesModal, ImportResult } from './ImportCompaniesModal'
 
 export interface Company {
   id: string
@@ -161,26 +162,44 @@ export function CompanyList() {
   const [expandedCompanyIds, setExpandedCompanyIds] = useState<Set<string>>(new Set())
   const [favoriteCompanyIds, setFavoriteCompanyIds] = useState<Set<string>>(new Set())
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
 
-  // Use shared companiesData array for filters & table
-  const companies: Company[] = companiesData
+  // Local state for companies and any imported contacts so they show up in owners
+  const [companies, setCompanies] = useState<Company[]>(companiesData)
+  const [importedPeople, setImportedPeople] = useState<Person[]>([])
 
-  // Load favorites from localStorage on mount
+  // Use base people plus any people created via import
+  const allPeople: Person[] = [...peopleData, ...importedPeople]
+
+  // Load favorites from localStorage on mount and keep in sync
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const stored = window.localStorage.getItem('favoriteCompanies')
-    if (stored) {
-      try {
-        const parsed: string[] = JSON.parse(stored)
-        setFavoriteCompanyIds(new Set(parsed))
-      } catch {
-        // ignore parse errors
+    const load = () => {
+      const stored = window.localStorage.getItem('favoriteCompanies')
+      if (stored) {
+        try {
+          const parsed: string[] = JSON.parse(stored)
+          setFavoriteCompanyIds(new Set(parsed))
+        } catch {
+          // ignore parse errors
+        }
+      } else {
+        setFavoriteCompanyIds(new Set())
       }
     }
+    load()
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'favoriteCompanies') {
+        load()
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
   }, [])
 
   const getOwnersForCompany = (companyName: string): string[] => {
-    const owners = peopleData
+    const owners = allPeople
       .filter((p) => p.company === companyName)
       .map((p) => p.owner)
     return Array.from(new Set(owners))
@@ -264,6 +283,15 @@ export function CompanyList() {
   const hasActiveFilters =
     selectedSegment || selectedLocation || selectedEmployeeRange || showFavoritesOnly || searchQuery
 
+  const handleImport = (result: ImportResult) => {
+    if (result.companiesToAdd.length > 0) {
+      setCompanies((prev) => [...prev, ...result.companiesToAdd])
+    }
+    if (result.peopleToAdd.length > 0) {
+      setImportedPeople((prev) => [...prev, ...result.peopleToAdd])
+    }
+  }
+
   // Format employee count
   const formatEmployeeCount = (count: number): string => {
     if (count >= 1000000) {
@@ -281,7 +309,11 @@ export function CompanyList() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Companies</h1>
           <div className="flex items-center space-x-3">
-            <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            <button
+              type="button"
+              onClick={() => setShowImportModal(true)}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
               Import
             </button>
             <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
@@ -471,6 +503,7 @@ export function CompanyList() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-200">
+              <th className="w-10 py-3 px-4"></th>
               <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
               <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Number of Employees</th>
               <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Segment</th>
@@ -490,35 +523,37 @@ export function CompanyList() {
                 <React.Fragment key={company.id}>
                   <tr className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="py-4 px-4">
+                      <button
+                        type="button"
+                        onClick={() => toggleFavoriteCompany(company.id)}
+                        className="p-1 rounded-full hover:bg-yellow-50"
+                        aria-label={
+                          favoriteCompanyIds.has(company.id)
+                            ? 'Unfavorite key account'
+                            : 'Favorite as key account'
+                        }
+                      >
+                        <Star
+                          className={`w-4 h-4 ${
+                            favoriteCompanyIds.has(company.id)
+                              ? 'text-yellow-400 fill-yellow-400'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      </button>
+                    </td>
+                    <td className="py-4 px-4">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
                           <Building2 className="w-5 h-5 text-white" />
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div>
                           <button
                             type="button"
                             onClick={() => router.push(`/companies/${company.id}`)}
                             className="font-medium text-gray-900 hover:text-indigo-600 hover:underline text-left"
                           >
                             {company.name}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => toggleFavoriteCompany(company.id)}
-                            className="p-1 rounded-full hover:bg-yellow-50"
-                            aria-label={
-                              favoriteCompanyIds.has(company.id)
-                                ? 'Unfavorite key account'
-                                : 'Favorite as key account'
-                            }
-                          >
-                            <Star
-                              className={`w-4 h-4 ${
-                                favoriteCompanyIds.has(company.id)
-                                  ? 'text-yellow-400 fill-yellow-400'
-                                  : 'text-gray-300'
-                              }`}
-                            />
                           </button>
                         </div>
                         <div>
@@ -611,14 +646,14 @@ export function CompanyList() {
                             </button>
                           </div>
                           <div className="overflow-hidden rounded-md border border-gray-200">
-                            <table className="min-w-full divide-y divide-gray-200">
+                              <table className="min-w-full divide-y divide-gray-200">
                               <thead className="bg-gray-50">
                                 <tr>
                                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                                     Deal
                                   </th>
                                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                                    Status
+                                    Stage
                                   </th>
                                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                                     Last activity
@@ -626,30 +661,51 @@ export function CompanyList() {
                                 </tr>
                               </thead>
                               <tbody className="bg-white divide-y divide-gray-100">
-                                {topProjects.map((project) => (
-                                  <tr key={project.id}>
-                                    <td className="px-3 py-2 text-sm text-gray-900">
-                                      <div className="font-medium truncate">{project.name}</div>
-                                      <div className="text-xs text-gray-500 mt-0.5">{project.value}</div>
-                                    </td>
-                                    <td className="px-3 py-2 text-sm">
-                                      <span
-                                        className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${
-                                          project.status === 'new'
-                                            ? 'bg-sky-100 text-sky-700'
-                                            : project.status === 'pipeline'
-                                            ? 'bg-amber-100 text-amber-700'
-                                            : 'bg-emerald-100 text-emerald-700'
-                                        }`}
-                                      >
-                                        {project.status === 'closed_won' ? 'closed won' : project.status}
-                                      </span>
-                                    </td>
-                                    <td className="px-3 py-2 text-xs text-gray-600">
-                                      {project.lastActivity}
-                                    </td>
-                                  </tr>
-                                ))}
+                                {topProjects.map((project) => {
+                                  const stage = project.stageLabel
+                                  const stageLower = stage.toLowerCase()
+                                  const isQualification = stageLower === 'qualification'
+                                  const isExport = stageLower === 'export to crm'
+                                  const href = isQualification
+                                    ? `/pipelines/deals/${project.id}`
+                                    : `/pipelines/deals-stages/${project.id}`
+
+                                  const stageClasses =
+                                    stageLower === 'outreach'
+                                      ? 'bg-amber-100 text-amber-700'
+                                      : isExport
+                                      ? 'bg-emerald-100 text-emerald-700'
+                                      : 'bg-gray-100 text-gray-700'
+
+                                  return (
+                                    <tr key={project.id} className="hover:bg-gray-50 cursor-pointer">
+                                      <td className="px-3 py-2 text-sm text-gray-900">
+                                        <button
+                                          type="button"
+                                          onClick={() => router.push(href)}
+                                          className="text-left w-full"
+                                        >
+                                          <div className="font-medium truncate hover:text-indigo-600">
+                                            {project.name}
+                                          </div>
+                                          <div className="text-xs text-gray-500 mt-0.5">
+                                            {project.value}
+                                          </div>
+                                        </button>
+                                      </td>
+                                      <td className="px-3 py-2 text-sm">
+                                        <span
+                                          className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${stageClasses}`}
+                                        >
+                                          {stage}
+                                        </span>
+                                      </td>
+                                      <td className="px-3 py-2 text-xs text-gray-600">
+                                        {project.lastActivity}
+                                      </td>
+                                    </tr>
+                                  )
+                                })}
                               </tbody>
                             </table>
                           </div>
@@ -671,6 +727,15 @@ export function CompanyList() {
           </div>
         )}
       </div>
+
+      {showImportModal && (
+        <ImportCompaniesModal
+          isOpen={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          existingCompanies={companies}
+          onImport={handleImport}
+        />
+      )}
     </div>
   )
 }

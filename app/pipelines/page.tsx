@@ -10,51 +10,63 @@ interface Deal {
   title: string
   company: string
   status: 'critical' | 'healthy' | 'slow-moving' | 'paused'
-  stage: string
+  stage: 'kontaktrecherche' | 'terminvereinbarung'
   value?: string
   progress?: number
 }
 
+// Shared dummy deals that line up with the companies/contacts you see
+// on the People and Companies pages (UK construction ecosystem).
+// 2 in Qualification, 3 in Outreach.
 const mockDeals: Deal[] = [
-  // Kontaktrecherche stage
-  { id: '1', title: 'Comprehensive renovation of institute buildings', company: 'Universität Ulm', status: 'healthy', stage: 'kontaktrecherche', value: '€250k', progress: 35 },
-  { id: '2', title: 'Office Building Modernization', company: 'Tech Corp GmbH', status: 'healthy', stage: 'kontaktrecherche', value: '€180k', progress: 20 },
-  { id: '3', title: 'Hospital Wing Expansion', company: 'Klinikum Stuttgart', status: 'slow-moving', stage: 'kontaktrecherche', value: '€420k', progress: 15 },
-  { id: '4', title: 'School Renovation Project', company: 'Stadt München', status: 'slow-moving', stage: 'kontaktrecherche', value: '€95k', progress: 10 },
-  { id: '5', title: 'Shopping Center Refurbishment', company: 'Retail Holdings AG', status: 'slow-moving', stage: 'kontaktrecherche', value: '€310k', progress: 25 },
-  { id: '6', title: 'Museum Extension', company: 'Kulturstiftung', status: 'healthy', stage: 'kontaktrecherche', value: '€275k', progress: 40 },
-  { id: '7', title: 'Parking Garage Construction', company: 'City Development', status: 'slow-moving', stage: 'kontaktrecherche', value: '€150k', progress: 5 },
-  { id: '8', title: 'Hotel Renovation', company: 'Hospitality Group', status: 'slow-moving', stage: 'kontaktrecherche', value: '€200k', progress: 12 },
-  { id: '9', title: 'Office Tower Facade', company: 'Business Park AG', status: 'slow-moving', stage: 'kontaktrecherche', value: '€340k', progress: 18 },
-  { id: '10', title: 'Community Center', company: 'Stadt Frankfurt', status: 'slow-moving', stage: 'kontaktrecherche', value: '€125k', progress: 8 },
-  { id: '11', title: 'Residential Complex', company: 'Housing Solutions', status: 'slow-moving', stage: 'kontaktrecherche', value: '€280k', progress: 22 },
-  { id: '12', title: 'Library Modernization', company: 'Stadt Heidelberg', status: 'slow-moving', stage: 'kontaktrecherche', value: '€90k', progress: 14 },
-  { id: '13', title: 'Sports Facility Upgrade', company: 'Athletic Association', status: 'slow-moving', stage: 'kontaktrecherche', value: '€160k', progress: 30 },
-  { id: '14', title: 'Theater Restoration', company: 'Arts Foundation', status: 'slow-moving', stage: 'kontaktrecherche', value: '€220k', progress: 28 },
-  { id: '15', title: 'Factory Conversion', company: 'Industrial Real Estate', status: 'slow-moving', stage: 'kontaktrecherche', value: '€380k', progress: 11 },
-  { id: '16', title: 'Train Station Upgrade', company: 'Deutsche Bahn', status: 'slow-moving', stage: 'kontaktrecherche', value: '€450k', progress: 33 },
-  { id: '17', title: 'Civic Hall Renovation', company: 'Stadt Karlsruhe', status: 'slow-moving', stage: 'kontaktrecherche', value: '€175k', progress: 19 },
-  { id: '18', title: 'Medical Center Expansion', company: 'Healthcare Services', status: 'slow-moving', stage: 'kontaktrecherche', value: '€295k', progress: 7 },
-  { id: '19', title: 'University Dormitory', company: 'Student Housing Corp', status: 'slow-moving', stage: 'kontaktrecherche', value: '€210k', progress: 24 },
-  { id: '20', title: 'Airport Terminal', company: 'Aviation Authority', status: 'slow-moving', stage: 'kontaktrecherche', value: '€520k', progress: 16 },
-  { id: '21', title: 'Conference Center', company: 'Events Management', status: 'slow-moving', stage: 'kontaktrecherche', value: '€260k', progress: 9 },
-  { id: '22', title: 'Senior Living Facility', company: 'Care Providers AG', status: 'slow-moving', stage: 'kontaktrecherche', value: '€190k', progress: 13 },
-  { id: '23', title: 'Aquatics Center', company: 'Recreation Department', status: 'slow-moving', stage: 'kontaktrecherche', value: '€145k', progress: 21 },
-  { id: '24', title: 'Research Lab Building', company: 'Science Institute', status: 'slow-moving', stage: 'kontaktrecherche', value: '€330k', progress: 6 },
-  { id: '25', title: 'Historic Building Restoration', company: 'Heritage Trust', status: 'slow-moving', stage: 'kontaktrecherche', value: '€240k', progress: 27 },
-  { id: '26', title: 'Market Hall Renovation', company: 'Stadt Bremen', status: 'healthy', stage: 'kontaktrecherche', value: '€115k', progress: 38 },
-  { id: '27', title: 'Church Restoration', company: 'Religious Foundation', status: 'critical', stage: 'kontaktrecherche', value: '€185k', progress: 2 },
-  
-  // Terminvereinbarung stage
-  { id: '28', title: 'Bridge Rehabilitation', company: 'Infrastructure Corp', status: 'healthy', stage: 'terminvereinbarung', value: '€390k', progress: 55 },
-  { id: '29', title: 'Courthouse Renovation', company: 'Justice Department', status: 'slow-moving', stage: 'terminvereinbarung', value: '€270k', progress: 45 },
-  { id: '30', title: 'Fire Station Construction', company: 'Stadt Mannheim', status: 'slow-moving', stage: 'terminvereinbarung', value: '€205k', progress: 50 },
-  { id: '31', title: 'Retail Complex Remodel', company: 'Shopping Centers Inc', status: 'critical', stage: 'terminvereinbarung', value: '€315k', progress: 42 },
-  
-  // Export ins CRM stage
-  { id: '32', title: 'Warehouse Distribution Center', company: 'Logistics Group', status: 'healthy', stage: 'export', value: '€440k', progress: 75 },
-  { id: '33', title: 'Educational Campus', company: 'University System', status: 'healthy', stage: 'export', value: '€380k', progress: 70 },
-  { id: '34', title: 'Government Office Complex', company: 'Federal Agency', status: 'healthy', stage: 'export', value: '€355k', progress: 68 },
+  // Qualification (Kontaktrecherche)
+  {
+    id: '1',
+    title: 'Liverpool Regeneration Project',
+    company: 'Morgan Sindall Group',
+    status: 'healthy',
+    stage: 'kontaktrecherche',
+    value: '£6.7M',
+    progress: 35,
+  },
+  {
+    id: '2',
+    title: 'North East Housing Development',
+    company: 'Bellway plc',
+    status: 'slow-moving',
+    stage: 'kontaktrecherche',
+    value: '£4.4M',
+    progress: 18,
+  },
+
+  // Outreach (Terminvereinbarung)
+  {
+    id: '3',
+    title: 'HS2 Rail Infrastructure Package',
+    company: 'Balfour Beatty',
+    status: 'healthy',
+    stage: 'terminvereinbarung',
+    value: '£4.2M',
+    progress: 55,
+  },
+  {
+    id: '4',
+    title: 'M25 Highways Upgrade',
+    company: 'Kier Group',
+    status: 'slow-moving',
+    stage: 'terminvereinbarung',
+    value: '£8.1M',
+    progress: 42,
+  },
+  {
+    id: '5',
+    title: 'Healthcare Facilities Programme',
+    company: 'Galliford Try',
+    status: 'slow-moving',
+    stage: 'terminvereinbarung',
+    value: '£2.9M',
+    progress: 48,
+  },
 ]
 
 export default function PipelinesPage() {
@@ -62,9 +74,16 @@ export default function PipelinesPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   const stages = [
-    { id: 'kontaktrecherche', name: 'Kontaktrecherche', deals: mockDeals.filter(d => d.stage === 'kontaktrecherche') },
-    { id: 'terminvereinbarung', name: 'Terminvereinbarung', deals: mockDeals.filter(d => d.stage === 'terminvereinbarung') },
-    { id: 'export', name: 'Export ins CRM', deals: mockDeals.filter(d => d.stage === 'export') },
+    {
+      id: 'kontaktrecherche',
+      name: 'Qualification',
+      deals: mockDeals.filter((d) => d.stage === 'kontaktrecherche'),
+    },
+    {
+      id: 'terminvereinbarung',
+      name: 'Outreach',
+      deals: mockDeals.filter((d) => d.stage === 'terminvereinbarung'),
+    },
   ]
 
   const getStatusColor = (status: string) => {
@@ -88,10 +107,10 @@ export default function PipelinesPage() {
   }
 
   const statusCounts = {
-    overdue: mockDeals.filter(d => d.progress && d.progress < 20).length,
-    slowMoving: mockDeals.filter(d => d.status === 'slow-moving').length,
-    readyToReactivate: mockDeals.filter(d => d.status === 'paused').length,
-    noNextStep: mockDeals.filter(d => !d.progress || d.progress === 0).length,
+    overdue: mockDeals.filter((d) => d.progress && d.progress < 20).length,
+    slowMoving: mockDeals.filter((d) => d.status === 'slow-moving').length,
+    readyToReactivate: mockDeals.filter((d) => d.status === 'paused').length,
+    noNextStep: mockDeals.filter((d) => !d.progress || d.progress === 0).length,
   }
 
   const stageStats = stages.map(stage => {
@@ -196,7 +215,7 @@ export default function PipelinesPage() {
         </div>
         
         {/* Pipeline Stages */}
-        <div className="flex-1 overflow-x-auto overflow-y-hidden bg-gray-50">
+              <div className="flex-1 overflow-x-auto overflow-y-hidden bg-gray-50">
           <div className="flex h-full p-6 space-x-6 min-w-max">
             {stageStats.map((stage) => (
               <div key={stage.id} className="flex flex-col w-96 bg-white rounded-lg border border-gray-200 overflow-visible">
@@ -241,22 +260,30 @@ export default function PipelinesPage() {
                 {/* Deal Tiles */}
                 <div className="flex-1 overflow-y-auto overflow-x-visible p-4">
                   <div className="grid grid-cols-5 gap-2">
-                    {stage.deals.map((deal) => (
-                      <div key={deal.id} className="group static">
-                        <Link 
-                          href={`/pipelines/deals/${deal.id}`}
-                          className={`block w-12 h-12 rounded border-2 ${getStatusColor(deal.status)} transition-all cursor-pointer`}
-                        >
+                    {stage.deals.map((deal) => {
+                      const href =
+                        stage.id === 'kontaktrecherche'
+                          ? `/pipelines/deals/${deal.id}`
+                          : `/pipelines/deals-stages/${deal.id}`
+
+                      return (
+                        <div key={deal.id} className="group static">
+                          <Link
+                            href={href}
+                            className={`block w-12 h-12 rounded border-2 ${getStatusColor(
+                              deal.status,
+                            )} transition-all cursor-pointer`}
+                          >
                           {/* Default state - just small colored tile */}
                           <div className="w-full h-full flex items-center justify-center">
                             {deal.progress !== undefined && deal.progress < 10 && (
                               <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full"></div>
                             )}
                           </div>
-                        </Link>
+                          </Link>
                         
-                        {/* Hover state - large detailed card - positioned fixed to escape overflow */}
-                        <div className="fixed left-auto w-80 bg-white rounded-lg border-2 border-gray-300 shadow-2xl p-5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-[100] mt-2">
+                          {/* Hover state - large detailed card - positioned fixed to escape overflow */}
+                          <div className="fixed left-auto w-80 bg-white rounded-lg border-2 border-gray-300 shadow-2xl p-5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-[100] mt-2">
                           <div className="space-y-4">
                             {/* Title and Status */}
                             <div>
@@ -311,9 +338,10 @@ export default function PipelinesPage() {
                               </div>
                             </div>
                           </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               </div>
