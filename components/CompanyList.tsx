@@ -547,7 +547,7 @@ export function CompanyList() {
                         <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
                           <Building2 className="w-5 h-5 text-white" />
                         </div>
-                        <div>
+                        <div className="flex flex-col justify-center">
                           <button
                             type="button"
                             onClick={() => router.push(`/companies/${company.id}`)}
@@ -555,14 +555,12 @@ export function CompanyList() {
                           >
                             {company.name}
                           </button>
-                        </div>
-                        <div>
                           {hasProjects && (
-                            <div className="mt-1">
+                            <div className="mt-2">
                               <button
                                 type="button"
                                 onClick={() => toggleExpanded(company.id)}
-                                className="inline-flex items-center space-x-1 text-xs font-medium text-indigo-600 hover:text-indigo-700"
+                                className="inline-flex items-center space-x-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-700 whitespace-nowrap"
                               >
                                 <span>{projects.length} related deals</span>
                                 {isExpanded ? (

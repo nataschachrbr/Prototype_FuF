@@ -562,11 +562,11 @@ export function PeopleList() {
                           <div className="font-medium text-gray-900">{person.name}</div>
                           <div className="text-xs text-gray-500">{person.location}</div>
                           {hasProjects && (
-                            <div className="mt-1">
+                            <div className="mt-2">
                               <button
                                 type="button"
                                 onClick={() => toggleExpanded(person.id)}
-                                className="inline-flex items-center space-x-1 text-xs font-medium text-indigo-600 hover:text-indigo-700"
+                                className="inline-flex items-center space-x-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-700 whitespace-nowrap"
                               >
                                 <span>{projects.length} related deals</span>
                                 {isExpanded ? (
