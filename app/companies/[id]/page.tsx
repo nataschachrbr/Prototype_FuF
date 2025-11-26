@@ -125,6 +125,495 @@ export default function CompanyDetailsPage() {
     return 'bg-sky-50 text-sky-700 border border-sky-200'
   }
 
+  const isBalfourBeatty =
+    company.id === '1' || company.name.toLowerCase().includes('balfour beatty')
+
+  const openCompanyByName = (name: string) => {
+    const match = companiesData.find((c) => c.name === name)
+    if (match) {
+      router.push(`/companies/${match.id}`)
+    }
+  }
+
+  const BalfourBeattyPartnerNetwork = () => (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">Partner network around Balfour Beatty</h2>
+          <p className="mt-1 text-sm text-gray-500 max-w-3xl">
+            How Balfour Beatty typically sits at the centre of real UK &amp; European projects, with
+            repeat partners grouped by their role in delivery. Use this to spot access points, early
+            influencers, and where relationships cluster.
+          </p>
+        </div>
+      </div>
+
+      {/* Central node */}
+      <div className="flex flex-col items-center">
+        <div className="inline-flex items-center justify-center px-4 py-2 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-800 text-xs font-semibold uppercase tracking-wide">
+          Central contractor
+        </div>
+        <div className="mt-3 inline-flex items-center justify-center px-5 py-3 rounded-full bg-indigo-600 text-white text-sm font-semibold shadow-sm">
+          Balfour Beatty
+        </div>
+        <div className="mt-4 h-px w-full max-w-3xl bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+      </div>
+
+      {/* Role-based partner bands */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {/* Clients / asset owners / developers (short list) */}
+        <div className="relative rounded-lg border border-gray-100 bg-gray-50/60 p-4">
+          <div className="absolute -top-3 left-4 inline-flex items-center px-2 py-0.5 rounded-full bg-gray-900 text-gray-100 text-[10px] font-semibold uppercase tracking-wide shadow-sm">
+            Clients / Asset owners / Developers
+          </div>
+          <div className="mt-2 space-y-3">
+            <div>
+              <button
+                type="button"
+                onClick={() => openCompanyByName('Transport for London')}
+                className="text-sm font-semibold text-indigo-700 hover:text-indigo-800 hover:underline"
+              >
+                Transport for London (TfL)
+              </button>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Role:</span> Urban transport client / asset owner
+              </p>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Relationship:</span> frequent repeat client.
+              </p>
+              <div className="mt-1 text-xs text-gray-500">
+                <span className="font-medium">Example projects:</span>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-[11px] font-medium text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 cursor-pointer"
+                  >
+                    London Underground station upgrades
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-[11px] font-medium text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 cursor-pointer"
+                  >
+                    Victoria &amp; Jubilee line works
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-dashed border-gray-200">
+              <button
+                type="button"
+                onClick={() => openCompanyByName('Network Rail')}
+                className="text-sm font-semibold text-indigo-700 hover:text-indigo-800 hover:underline"
+              >
+                Network Rail
+              </button>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Role:</span> National rail infrastructure owner
+              </p>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Relationship:</span> frequent collaborator on UK rail.
+              </p>
+              <div className="mt-1 text-xs text-gray-500">
+                <span className="font-medium">Example projects:</span>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-[11px] font-medium text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 cursor-pointer"
+                  >
+                    Thameslink Programme &ndash; London Bridge area works
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-[11px] font-medium text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 cursor-pointer"
+                  >
+                    UK rail renewals framework packages
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Engineering consultants (short list) */}
+        <div className="relative rounded-lg border border-gray-100 bg-gray-50/60 p-4">
+          <div className="absolute -top-3 left-4 inline-flex items-center px-2 py-0.5 rounded-full bg-sky-900 text-sky-50 text-[10px] font-semibold uppercase tracking-wide shadow-sm">
+            Engineering consultants
+          </div>
+          <div className="mt-2 space-y-3">
+            <div>
+              <button
+                type="button"
+                onClick={() => openCompanyByName('Mott MacDonald')}
+                className="text-sm font-semibold text-indigo-700 hover:text-indigo-800 hover:underline"
+              >
+                Mott MacDonald
+              </button>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Role:</span> Multidisciplinary engineering consultant
+              </p>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Relationship:</span> regular design and advisory partner.
+              </p>
+              <div className="mt-1 text-xs text-gray-500">
+                <span className="font-medium">Example projects:</span>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[11px] font-medium text-sky-800 hover:bg-sky-100 hover:border-sky-300 cursor-pointer"
+                  >
+                    A14 Cambridge&ndash;Huntingdon Improvement Scheme
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[11px] font-medium text-sky-800 hover:bg-sky-100 hover:border-sky-300 cursor-pointer"
+                  >
+                    UK highways and structures design frameworks
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-dashed border-gray-200">
+              <button
+                type="button"
+                onClick={() => openCompanyByName('Arup')}
+                className="text-sm font-semibold text-indigo-700 hover:text-indigo-800 hover:underline"
+              >
+                Arup
+              </button>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Role:</span> Engineering and design consultant
+              </p>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Relationship:</span> frequent collaborator on complex rail
+                and stations.
+              </p>
+              <div className="mt-1 text-xs text-gray-500">
+                <span className="font-medium">Example projects:</span>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[11px] font-medium text-sky-800 hover:bg-sky-100 hover:border-sky-300 cursor-pointer"
+                  >
+                    Crossrail &ndash; rail and station works
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[11px] font-medium text-sky-800 hover:bg-sky-100 hover:border-sky-300 cursor-pointer"
+                  >
+                    Major UK station redevelopments
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Architectural design partners (short list) */}
+        <div className="relative rounded-lg border border-gray-100 bg-gray-50/60 p-4">
+          <div className="absolute -top-3 left-4 inline-flex items-center px-2 py-0.5 rounded-full bg-purple-900 text-purple-50 text-[10px] font-semibold uppercase tracking-wide shadow-sm">
+            Architectural design partners
+          </div>
+          <div className="mt-2 space-y-3">
+            <div>
+              <button
+                type="button"
+                onClick={() => openCompanyByName('Grimshaw Architects')}
+                className="text-sm font-semibold text-indigo-700 hover:text-indigo-800 hover:underline"
+              >
+                Grimshaw Architects
+              </button>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Role:</span> Transport and infrastructure architect
+              </p>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Relationship:</span> go-to design partner on major
+                stations.
+              </p>
+              <div className="mt-1 text-xs text-gray-500">
+                <span className="font-medium">Example projects:</span>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-purple-200 bg-purple-50 px-2.5 py-0.5 text-[11px] font-medium text-purple-800 hover:bg-purple-100 hover:border-purple-300 cursor-pointer"
+                  >
+                    London Bridge Station redevelopment
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-purple-200 bg-purple-50 px-2.5 py-0.5 text-[11px] font-medium text-purple-800 hover:bg-purple-100 hover:border-purple-300 cursor-pointer"
+                  >
+                    Major UK rail hub upgrades
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-dashed border-gray-200">
+              <button
+                type="button"
+                onClick={() => openCompanyByName('WilkinsonEyre')}
+                className="text-sm font-semibold text-indigo-700 hover:text-indigo-800 hover:underline"
+              >
+                WilkinsonEyre
+              </button>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Role:</span> Signature architectural practice
+              </p>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Relationship:</span> frequent collaborator on landmark
+                regeneration.
+              </p>
+              <div className="mt-1 text-xs text-gray-500">
+                <span className="font-medium">Example projects:</span>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-purple-200 bg-purple-50 px-2.5 py-0.5 text-[11px] font-medium text-purple-800 hover:bg-purple-100 hover:border-purple-300 cursor-pointer"
+                  >
+                    Battersea Power Station redevelopment
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-purple-200 bg-purple-50 px-2.5 py-0.5 text-[11px] font-medium text-purple-800 hover:bg-purple-100 hover:border-purple-300 cursor-pointer"
+                  >
+                    Major London regeneration schemes
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Project management / consultancy partners (short list) */}
+        <div className="relative rounded-lg border border-gray-100 bg-gray-50/60 p-4">
+          <div className="absolute -top-3 left-4 inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-900 text-emerald-50 text-[10px] font-semibold uppercase tracking-wide shadow-sm">
+            Project management / Consultancy partners
+          </div>
+          <div className="mt-2 space-y-3">
+            <div>
+              <button
+                type="button"
+                onClick={() => openCompanyByName('AECOM')}
+                className="text-sm font-semibold text-indigo-700 hover:text-indigo-800 hover:underline"
+              >
+                AECOM
+              </button>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Role:</span> Programme / project management and technical
+                advisor
+              </p>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Relationship:</span> regular PM and design integrator.
+              </p>
+              <div className="mt-1 text-xs text-gray-500">
+                <span className="font-medium">Example projects:</span>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-800 hover:bg-emerald-100 hover:border-emerald-300 cursor-pointer"
+                  >
+                    Crossrail &ndash; programme management
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-800 hover:bg-emerald-100 hover:border-emerald-300 cursor-pointer"
+                  >
+                    Major UK corridor upgrades
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-dashed border-gray-200">
+              <button
+                type="button"
+                onClick={() => openCompanyByName('Turner & Townsend')}
+                className="text-sm font-semibold text-indigo-700 hover:text-indigo-800 hover:underline"
+              >
+                Turner &amp; Townsend
+              </button>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Role:</span> Cost management and programme controls
+              </p>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Relationship:</span> common commercial / PMO partner.
+              </p>
+              <div className="mt-1 text-xs text-gray-500">
+                <span className="font-medium">Example projects:</span>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-800 hover:bg-emerald-100 hover:border-emerald-300 cursor-pointer"
+                  >
+                    London 2012 Olympic Park legacy
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-800 hover:bg-emerald-100 hover:border-emerald-300 cursor-pointer"
+                  >
+                    UK regeneration and civic programmes
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Co-contractors / joint venture partners (short list) */}
+        <div className="relative rounded-lg border border-gray-100 bg-gray-50/60 p-4">
+          <div className="absolute -top-3 left-4 inline-flex items-center px-2 py-0.5 rounded-full bg-amber-900 text-amber-50 text-[10px] font-semibold uppercase tracking-wide shadow-sm">
+            Co-contractors / Joint venture partners
+          </div>
+          <div className="mt-2 space-y-3">
+            <div>
+              <button
+                type="button"
+                onClick={() => openCompanyByName('Costain Group')}
+                className="text-sm font-semibold text-indigo-700 hover:text-indigo-800 hover:underline"
+              >
+                Costain
+              </button>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Role:</span> Tier-1 contractor, JV partner
+              </p>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Relationship:</span> common joint venture collaborator.
+              </p>
+              <div className="mt-1 text-xs text-gray-500">
+                <span className="font-medium">Example projects:</span>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-800 hover:bg-amber-100 hover:border-amber-300 cursor-pointer"
+                  >
+                    A14 Cambridge&ndash;Huntingdon Improvement Scheme
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-800 hover:bg-amber-100 hover:border-amber-300 cursor-pointer"
+                  >
+                    Thames Tideway Tunnel sections
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-dashed border-gray-200">
+              <button
+                type="button"
+                onClick={() => openCompanyByName('Skanska UK')}
+                className="text-sm font-semibold text-indigo-700 hover:text-indigo-800 hover:underline"
+              >
+                Skanska
+              </button>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Role:</span> Tier-1 contractor, co-contractor
+              </p>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Relationship:</span> frequent collaborator on major
+                corridors.
+              </p>
+              <div className="mt-1 text-xs text-gray-500">
+                <span className="font-medium">Example projects:</span>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-800 hover:bg-amber-100 hover:border-amber-300 cursor-pointer"
+                  >
+                    M25 motorway widening and improvements
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-800 hover:bg-amber-100 hover:border-amber-300 cursor-pointer"
+                  >
+                    UK strategic road corridor upgrades
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Specialist contractors (short list) */}
+        <div className="relative rounded-lg border border-gray-100 bg-gray-50/60 p-4">
+          <div className="absolute -top-3 left-4 inline-flex items-center px-2 py-0.5 rounded-full bg-rose-900 text-rose-50 text-[10px] font-semibold uppercase tracking-wide shadow-sm">
+            Specialist contractors
+          </div>
+          <div className="mt-2 space-y-3">
+            <div>
+              <button
+                type="button"
+                onClick={() => openCompanyByName('NG Bailey')}
+                className="text-sm font-semibold text-indigo-700 hover:text-indigo-800 hover:underline"
+              >
+                NG Bailey
+              </button>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Role:</span> Building services / M&amp;E specialist
+              </p>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Relationship:</span> regular specialist subcontractor on
+                complex buildings.
+              </p>
+              <div className="mt-1 text-xs text-gray-500">
+                <span className="font-medium">Example projects:</span>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-[11px] font-medium text-rose-800 hover:bg-rose-100 hover:border-rose-300 cursor-pointer"
+                  >
+                    UK hospital projects &ndash; M&amp;E fit-out
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-[11px] font-medium text-rose-800 hover:bg-rose-100 hover:border-rose-300 cursor-pointer"
+                  >
+                    Rail station upgrades &ndash; building services
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-dashed border-gray-200">
+              <button
+                type="button"
+                onClick={() => openCompanyByName('Balfour Beatty Kilpatrick')}
+                className="text-sm font-semibold text-indigo-700 hover:text-indigo-800 hover:underline"
+              >
+                Balfour Beatty Kilpatrick
+              </button>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Role:</span> In-group M&amp;E and fit-out specialist
+              </p>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Relationship:</span> integrated specialist arm on
+                technically demanding schemes.
+              </p>
+              <div className="mt-1 text-xs text-gray-500">
+                <span className="font-medium">Example projects:</span>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-[11px] font-medium text-rose-800 hover:bg-rose-100 hover:border-rose-300 cursor-pointer"
+                  >
+                    Hinkley Point C &ndash; building services
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-[11px] font-medium text-rose-800 hover:bg-rose-100 hover:border-rose-300 cursor-pointer"
+                  >
+                    Major healthcare and defence fit-out projects
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="pt-4 border-t border-gray-100 text-xs text-gray-500">
+        This diagram is intentionally high-level: it highlights who typically clusters around Balfour
+        Beatty on real schemes, not a complete list of every partner.
+      </div>
+    </div>
+  )
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
@@ -220,7 +709,16 @@ export default function CompanyDetailsPage() {
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                          Opportunity
+                          Project
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                          Role
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                          Phase
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                          Value
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                           Stage
@@ -250,11 +748,18 @@ export default function CompanyDetailsPage() {
                                 <div className="text-sm font-medium text-gray-900">
                                   {project.name}
                                 </div>
-                                <div className="text-xs text-gray-500">
-                                  {company.location} · {project.value}
-                                </div>
+                                <div className="text-xs text-gray-500">{company.location}</div>
                               </div>
                             </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="text-sm text-gray-900">{project.role}</div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="text-sm text-gray-900">{project.phase}</div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="text-sm text-gray-900">{project.value}</div>
                           </td>
                           <td className="px-4 py-3">
                             <span
@@ -479,6 +984,7 @@ export default function CompanyDetailsPage() {
                   </div>
                 )}
               </div>
+              {isBalfourBeatty && <BalfourBeattyPartnerNetwork />}
             </div>
           </div>
         </div>

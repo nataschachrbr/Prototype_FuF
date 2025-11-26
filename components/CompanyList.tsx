@@ -148,6 +148,14 @@ export const companiesData: Company[] = [
     keywords: ["builders' merchant", 'timber & materials', 'branch network'],
     location: 'Ipswich, UK',
   },
+  {
+    id: '17',
+    name: 'Arup',
+    employees: 16000,
+    segment: 'Engineering consultant',
+    keywords: ['design', 'engineering', 'transport', 'stations'],
+    location: 'London, UK',
+  },
 ]
 
 export function CompanyList() {
