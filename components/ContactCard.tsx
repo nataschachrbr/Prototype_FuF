@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Mail, Phone, Building2, Edit2, MoreVertical, Users, Copy, Archive, Trash2 } from 'lucide-react'
+import { Mail, Phone, Building2, Edit2, MoreVertical, Users, Copy, Archive, Trash2, Star } from 'lucide-react'
+
+const DEAL_CONTACT_ID = 'deal-primary-contact'
 
 export function ContactCard() {
   const [showMenu, setShowMenu] = useState<boolean>(false)
+  const [isFavorite, setIsFavorite] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   // Close menu when clicking outside
@@ -20,6 +23,45 @@ export function ContactCard() {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
+
+  // Load favorite state for this deal contact
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const stored = window.localStorage.getItem('favoriteContacts')
+    if (stored) {
+      try {
+        const parsed: string[] = JSON.parse(stored)
+        setIsFavorite(parsed.includes(DEAL_CONTACT_ID))
+      } catch {
+        // ignore
+      }
+    }
+  }, [])
+
+  const toggleFavorite = () => {
+    setIsFavorite(prev => {
+      const next = !prev
+      if (typeof window !== 'undefined') {
+        const stored = window.localStorage.getItem('favoriteContacts')
+        let ids: string[] = []
+        if (stored) {
+          try {
+            ids = JSON.parse(stored)
+          } catch {
+            ids = []
+          }
+        }
+        const setIds = new Set(ids)
+        if (next) {
+          setIds.add(DEAL_CONTACT_ID)
+        } else {
+          setIds.delete(DEAL_CONTACT_ID)
+        }
+        window.localStorage.setItem('favoriteContacts', JSON.stringify(Array.from(setIds)))
+      }
+      return next
+    })
+  }
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden relative">
@@ -71,6 +113,18 @@ export function ContactCard() {
                 <h3 className="text-lg font-semibold text-gray-900">Joachim Hofmann</h3>
                 <Building2 className="w-4 h-4 text-gray-400" />
                 <Users className="w-4 h-4 text-gray-400" />
+                <button
+                  type="button"
+                  onClick={toggleFavorite}
+                  className="ml-1 p-1 rounded-full hover:bg-yellow-50"
+                  aria-label={isFavorite ? 'Unfavorite key contact' : 'Favorite as key contact'}
+                >
+                  <Star
+                    className={`w-4 h-4 ${
+                      isFavorite ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+                    }`}
+                  />
+                </button>
               </div>
               
               <p className="text-sm text-indigo-600 mb-3">

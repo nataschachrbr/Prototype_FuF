@@ -17,7 +17,7 @@ export function Sidebar() {
       </Link>
       
       {/* Navigation Icons */}
-      <Link href="/" className={`w-10 h-10 flex items-center justify-center hover:bg-gray-200 rounded-lg transition-colors ${pathname === '/' ? 'bg-gray-200' : ''}`}>
+      <Link href="/pipelines/deals-stages/1" className={`w-10 h-10 flex items-center justify-center hover:bg-gray-200 rounded-lg transition-colors ${pathname.startsWith('/pipelines/deals-stages') ? 'bg-gray-200' : ''}`}>
         <Inbox className="w-5 h-5" />
       </Link>
       

@@ -1,10 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { Building2, Mail, Phone, Users } from 'lucide-react'
 import { ContactCard } from './ContactCard'
 import { ActionTabs } from './ActionTabs'
 
 export function MainContent() {
+  const [activeTab, setActiveTab] = useState<'contacts' | 'activity' | 'deal-info'>('contacts')
+
   return (
     <div className="flex-1 overflow-y-auto bg-gray-50 px-8 py-6">
       {/* Project Title */}
@@ -41,7 +44,7 @@ export function MainContent() {
         <ContactCard />
         
         {/* Action Tabs */}
-        <ActionTabs />
+        <ActionTabs activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
     </div>
   )
