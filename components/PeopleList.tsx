@@ -2,10 +2,23 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, ChevronDown, Mail, Phone, User, Building2, ChevronRight, ChevronDown as ChevronDownIcon, Briefcase, Star } from 'lucide-react'
+import {
+  Search,
+  ChevronDown,
+  Mail,
+  Phone,
+  User,
+  Building2,
+  ChevronRight,
+  ChevronDown as ChevronDownIcon,
+  Briefcase,
+  Star,
+} from 'lucide-react'
 import { companiesData } from './CompanyList'
 import { getProjectsForContact, Project } from '@/lib/projects'
 import { peopleData, Person } from '@/lib/people'
+import { AIResearchSession, loadAIContacts, loadSessions } from '@/lib/aiResearch'
+import { Sequence, getAllSequences } from '@/lib/sequences'
 
 export function PeopleList() {
   const router = useRouter()
@@ -26,11 +39,16 @@ export function PeopleList() {
   const [favoriteContactIds, setFavoriteContactIds] = useState<Set<string>>(new Set())
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   const [contactNotes, setContactNotes] = useState<Record<string, string>>({})
+  const [aiContacts, setAiContacts] = useState<Person[]>([])
+  const [sessions, setSessions] = useState<AIResearchSession[]>([])
+  const [activeView, setActiveView] = useState<string>('all')
+  const [sequences, setSequences] = useState<Sequence[]>([])
+  const [selectedSequenceId, setSelectedSequenceId] = useState<string>('')
 
   const CONTACT_NOTES_STORAGE_KEY = 'contactNotes'
 
-  // UK Construction Industry Contacts
-  const people: Person[] = peopleData
+  // UK Construction Industry Contacts + AI researched contacts
+  const people: Person[] = [...peopleData, ...aiContacts]
 
   // Load favorite contacts from localStorage
   useEffect(() => {
@@ -58,6 +76,18 @@ export function PeopleList() {
     }
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
+  // Load AI research context on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setAiContacts(loadAIContacts())
+    setSessions(loadSessions())
+  }, [])
+
+  // Load sequences for enrollment dropdown
+  useEffect(() => {
+    setSequences(getAllSequences())
   }, [])
 
   // Load contact notes from localStorage
@@ -112,6 +142,13 @@ export function PeopleList() {
       selectedSequenceStatus === '' || selectedSequenceStatus === seqStatus
     const matchesFavorite = !showFavoritesOnly || favoriteContactIds.has(person.id)
 
+    const matchesResearchView =
+      activeView === 'all'
+        ? true
+        : sessions
+            .find((s) => s.id === activeView)
+            ?.contactIds.includes(person.id) ?? false
+
     return (
       matchesSearch &&
       matchesJobTitle &&
@@ -120,7 +157,8 @@ export function PeopleList() {
       matchesLocation &&
       matchesSegment &&
       matchesSequenceStatus &&
-      matchesFavorite
+      matchesFavorite &&
+      matchesResearchView
     )
   })
 
@@ -172,6 +210,31 @@ export function PeopleList() {
     })
   }
 
+  const handleAddActiveListToSequence = () => {
+    if (activeView === 'all' || !selectedSequenceId) return
+    const session = sessions.find((s) => s.id === activeView)
+    const sequence = sequences.find((s) => s.id === selectedSequenceId)
+    if (!session || !sequence) return
+
+    const idsToEnroll = new Set(session.contactIds)
+
+    setAiContacts((prev) =>
+      prev.map((person) => {
+        if (!idsToEnroll.has(person.id)) return person
+        return {
+          ...person,
+          sequenceEnrollment: {
+            sequenceName: sequence.name,
+            currentStep: 'Cold outreach – initial email sent',
+            stepNumber: 1,
+            totalSteps: 5,
+            status: 'active',
+          },
+        }
+      }),
+    )
+  }
+
   const openDealForProject = (project: Project) => {
     const basePath = project.id === '1' || project.id === '2' ? '/pipelines/deals' : '/pipelines/deals-stages'
     router.push(`${basePath}/${project.id}`)
@@ -181,8 +244,64 @@ export function PeopleList() {
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
       <div className="border-b border-gray-200 px-8 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">People</h1>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">People</h1>
+            <div className="mt-2 inline-flex items-center space-x-2 text-xs text-gray-500">
+              <span>View:</span>
+              <button
+                type="button"
+                onClick={() => setActiveView('all')}
+                className={`px-2 py-1 rounded-full border text-[11px] font-medium ${
+                  activeView === 'all'
+                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Master list
+              </button>
+              {sessions.map((session) => (
+                <button
+                  key={session.id}
+                  type="button"
+                  onClick={() => setActiveView(session.id)}
+                  className={`px-2 py-1 rounded-full border text-[11px] font-medium max-w-[220px] truncate ${
+                    activeView === session.id
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                  title={session.name}
+                >
+                  Buyer personas – {session.name}
+                </button>
+              ))}
+            </div>
+            {activeView !== 'all' && filteredPeople.length > 0 && (
+              <div className="mt-2 flex items-center space-x-2 text-xs">
+                <span className="text-gray-500">Enroll this list into a sequence:</span>
+                <select
+                  value={selectedSequenceId}
+                  onChange={(e) => setSelectedSequenceId(e.target.value)}
+                  className="border border-gray-300 rounded-md px-2 py-1 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="">Choose sequence…</option>
+                  {sequences.map((seq) => (
+                    <option key={seq.id} value={seq.id}>
+                      {seq.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={handleAddActiveListToSequence}
+                  disabled={!selectedSequenceId}
+                  className="px-3 py-1 rounded-md bg-indigo-600 text-white font-medium disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed"
+                >
+                  Add to sequence
+                </button>
+              </div>
+            )}
+          </div>
           <div className="flex items-center space-x-3">
             <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
               Import

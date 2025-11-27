@@ -38,6 +38,7 @@ const mockDealData: Record<string, any> = {
       contactAddedToSequence: false,
       contactConfirmed: false,
       awaitingSequenceConfirmation: false,
+      sequenceMode: null, // 'automated' | 'manual' | null
       sources: [],
     },
   },
@@ -71,6 +72,7 @@ const mockDealData: Record<string, any> = {
       contactAddedToSequence: false,
       contactConfirmed: false,
       awaitingSequenceConfirmation: false,
+      sequenceMode: null,
       sources: [],
     },
   },
@@ -104,6 +106,7 @@ const mockDealData: Record<string, any> = {
       contactAddedToSequence: false,
       contactConfirmed: false,
       awaitingSequenceConfirmation: false,
+      sequenceMode: null,
       sources: [],
     },
   },
@@ -171,6 +174,7 @@ export default function DealStagesPage() {
   const [emailSentDate, setEmailSentDate] = useState<Date | null>(null) // Track when email was sent
   const [manualStepCompleted, setManualStepCompleted] = useState(false)
   const [expandedStep, setExpandedStep] = useState<number | null>(null) // Track which step is expanded
+  const [hasShownNewInfoMessage, setHasShownNewInfoMessage] = useState(false)
   
   // Call functionality state
   const [showCallModal, setShowCallModal] = useState(false)
@@ -186,10 +190,10 @@ export default function DealStagesPage() {
 
   // Initialize chat based on readiness status and email sent date
   useEffect(() => {
-    const initialMessages = []
+    const initialMessages: Array<{sender: 'user' | 'assistant', message: string, timestamp: string, sources?: Array<{title: string, url: string}>}> = []
     const daysSinceEmail = getDaysSince(emailSentDate)
     
-    // Priority: Show email follow-up status if email was sent
+    // Priority: Show email follow-up status if email was sent (manual sequence)
     if (manualStepCompleted && emailSentDate) {
       if (daysSinceEmail === 1) {
         initialMessages.push({
@@ -227,23 +231,56 @@ export default function DealStagesPage() {
           }
         }
       }
-    } else if (deal.outreach.readinessStatus === 'not-ready') {
+    }
+    
+    // When new project information is discovered and the deal becomes ready,
+    // show a discovery message prompting for primary contact confirmation.
+    if (deal.outreach.readinessStatus === 'ready' && showNewInfoNotification && !hasShownNewInfoMessage) {
+      const discoveryMessage = {
+        sender: 'assistant' as const,
+        message: `🎉 Great news! I've discovered new project information:\n\n${deal.outreach.readyTriggers}\n\n✅ This deal is now ready for outreach.\n\n👤 Important Update: We've identified a new contact!\nThe architectural office has announced that ${deal.outreach.primaryContact?.name} (${deal.outreach.primaryContact?.role}) is now the project lead for this renovation. This is a change from our previous contact information.\n\nDo you want to add ${deal.outreach.primaryContact?.name} as the primary contact for this outreach?`,
+        timestamp: 'Just now',
+        sources: deal.outreach.sources || []
+      }
+    
+      // Always replace current chat with the discovery message so it's the first thing the user sees
+      setChatMessages([discoveryMessage])
+      setHasShownNewInfoMessage(true)
+      return
+    }
+    
+    // Default initial state when deal is not ready yet (only when chat is empty)
+    if (deal.outreach.readinessStatus === 'not-ready' && chatMessages.length === 0) {
       initialMessages.push({
         sender: 'assistant' as const,
         message: `I'm analyzing this project's outreach timing.\n\n⚠️ Timing Status: Not Ready Yet\n\n${deal.outreach.readinessReason}\n\nI'm actively monitoring for facade-relevant signals like: first renderings, planning phase kickoff, material strategies, or envelope performance requirements. I'll alert you immediately when the timing becomes favorable.`,
         timestamp: 'Just now'
       })
-    } else if (deal.outreach.readinessStatus === 'ready' && showNewInfoNotification) {
-      initialMessages.push({
-        sender: 'assistant' as const,
-        message: `🎉 Great news! I've discovered new project information:\n\n${deal.outreach.readyTriggers}\n\n✅ This deal is now ready for outreach.\n\n👤 Important Update: We've identified a new contact!\nThe architectural office has announced that ${deal.outreach.primaryContact?.name} (${deal.outreach.primaryContact?.role}) is now the project lead for this renovation. This is a change from our previous contact information.\n\nDo you want to add ${deal.outreach.primaryContact?.name} as the primary contact for this outreach?`,
-        timestamp: 'Just now',
-        sources: deal.outreach.sources || []
-      })
+      // Reset flag so if the deal becomes ready again later we can show the new-info message
+      if (hasShownNewInfoMessage) {
+        setHasShownNewInfoMessage(false)
+      }
     }
     
-    setChatMessages(initialMessages)
-  }, [deal.outreach.readinessStatus, showNewInfoNotification, deal.outreach.readinessReason, deal.outreach.readyTriggers, deal.outreach.primaryContact, emailSentDate, manualStepCompleted, phoneCallCompleted, callOutcome, callCompletedDate, deal.outreach.primaryContact])
+    // Only initialize chat when it's currently empty, so we don't wipe out ongoing conversation
+    if (initialMessages.length > 0 && chatMessages.length === 0) {
+      setChatMessages(initialMessages)
+    }
+  }, [
+    deal.outreach.readinessStatus,
+    showNewInfoNotification,
+    deal.outreach.readinessReason,
+    deal.outreach.readyTriggers,
+    deal.outreach.primaryContact,
+    deal.outreach.sources,
+    emailSentDate,
+    manualStepCompleted,
+    phoneCallCompleted,
+    callOutcome,
+    callCompletedDate,
+    hasShownNewInfoMessage,
+    chatMessages.length
+  ])
 
   const handleSendMessage = () => {
     if (!inputValue.trim()) return
@@ -259,15 +296,16 @@ export default function DealStagesPage() {
     // Generate assistant response
     setTimeout(() => {
       let assistantResponse = ''
+      const normalizedInput = inputValue.toLowerCase()
       
-      // Step 1: User confirms they want to add the new contact
+      // Step 1: User confirms they want to add the new contact (YES)
       if (deal.outreach.readinessStatus === 'ready' && 
           deal.outreach.primaryContact?.isNew && 
           !deal.outreach.contactConfirmed && 
-          (inputValue.toLowerCase().includes('yes') || inputValue.toLowerCase().includes('add'))) {
+          (normalizedInput.includes('yes') || normalizedInput.includes('add'))) {
         
         // Confirm contact
-        assistantResponse = `✅ Great! I've confirmed ${deal.outreach.primaryContact?.name} as the primary contact for this deal.\n\nNow, based on their role as ${deal.outreach.primaryContact?.role} and the current project phase (schematic design), I recommend enrolling them in:\n\n📧 **"Architect Early Spec - Facade Systems"**\n\nThis sequence is specifically designed for architects in the schematic design phase:\n• 5 touchpoints over 3 weeks\n• Mix of manual and automated steps\n• Focus on technical specifications and design integration\n\n⚠️ Important: The first email in this sequence is **manual** - you'll use a template that needs personalization before sending.\n\nShall I add ${deal.outreach.primaryContact?.name} to this sequence?`
+        assistantResponse = `✅ Great! I've confirmed ${deal.outreach.primaryContact?.name} as the primary contact for this deal.\n\nNow, based on their role as ${deal.outreach.primaryContact?.role} and the current project phase (schematic design), I've identified the most relevant **architect-specific sequence**:\n\n📧 **\"Architect Early Spec - Facade Systems\"**\n\nThis is tailored for architects (different from how we'd talk to building owners, investors or GCs).\n\nNext, you can choose **how** you want to run this outreach:\n\n1) **Fully automated email sequence** – multi-step email campaign with follow-ups until there's a reply. You only get involved once the contact responds.\n2) **Manual, AI-supported sequence** – 3-step sequence with:\n   • Manual email (AI generates a personalized draft, you review & send)\n   • Follow-up phone call (AI-generated call script + note-taking support)\n   • Follow-up email (again AI-drafted for you to adjust and send)\n\nHow would you like to proceed for ${deal.outreach.primaryContact?.name} – **automated email-only** or **manual AI-supported**?`
         
         // Update state: contact is confirmed, now awaiting sequence confirmation
         setDeal((prev: any) => ({
@@ -278,21 +316,47 @@ export default function DealStagesPage() {
             awaitingSequenceConfirmation: true,
             sequence: {
               name: 'Architect Early Spec - Facade Systems',
-              touchpoints: 5,
-              duration: '3 weeks',
+              touchpoints: 3,
+              duration: '3 steps',
             },
+            sequenceMode: null,
           }
         }))
+      
+      // Step 1: User declines adding the new contact (NO)
+      } else if (deal.outreach.readinessStatus === 'ready' &&
+                 deal.outreach.primaryContact?.isNew &&
+                 !deal.outreach.contactConfirmed &&
+                 (normalizedInput.includes('no') || normalizedInput.includes("don't"))) {
         
-      // Step 2: User confirms they want to add to sequence
-      } else if (deal.outreach.contactConfirmed && 
-                 deal.outreach.awaitingSequenceConfirmation && 
-                 (inputValue.toLowerCase().includes('yes') || inputValue.toLowerCase().includes('proceed') || inputValue.toLowerCase().includes('add'))) {
+        assistantResponse = `👍 Got it. I won't change the primary contact for this deal.\n\nYou can still ask me about outreach timing or sequences at any time.`
+      
+      // Step 2A: User chooses fully automated email sequence
+      } else if (deal.outreach.contactConfirmed &&
+                 deal.outreach.awaitingSequenceConfirmation &&
+                 (normalizedInput.includes('automated') || normalizedInput.includes('email-only') || normalizedInput.includes('auto'))) {
         
-        // Add to sequence
-        assistantResponse = `✅ Perfect! I've added ${deal.outreach.primaryContact?.name} to the "Architect Early Spec - Facade Systems" sequence.\n\n📋 **Next Step - Manual Email (Step 1/5)**\n\nI've prepared a personalized email template for you. The template includes:\n• Reference to their new role as project lead\n• Mention of the Universität Ulm renovation project\n• Introduction to your façade systems\n• Soft call-to-action for a technical consultation\n\n✏️ **Action Required:** Please review and personalize the template before sending. You can find it in the "Draft Emails" section.\n\nOnce you send the first email, the automated follow-up sequence will begin (Steps 2-5 will be sent automatically based on engagement).`
+        const enrollmentMessage = `✅ Got it. I've enrolled ${deal.outreach.primaryContact?.name} into a **fully automated, email-only sequence** based on the architect playbook.`
         
-        // Actually add to sequence and start it
+        const progressMessage = `📧 **Progress update:**\nI've just sent the **first automated architect outreach email** in the sequence and will now monitor your inbox for a reply from ${deal.outreach.primaryContact?.name}.\n\nIf you don't receive a reply within the next **3 days**, I'll automatically send **Follow-up Email 1** (case study + technical angle).\nIf there's still no reply after that, **Follow-up Email 2** (strong CTA + meeting proposal) is scheduled for **7 days from now**.\n\nYou don’t need to do anything for these emails – they’ll run automatically. I’ll surface this conversation again as soon as ${deal.outreach.primaryContact?.name} responds.`
+
+        // Auto-generate and "send" the first email immediately
+        const automatedEmail = `Dear Dr. Weber,
+
+I saw you recently joined DEGLE.DEGLE Architekten as Lead Architect & Project Lead for the Universität Ulm renovation project - Congratulations! It's an exciting time in sustainable architecture and building envelope design.
+
+Architects leading university projects often focus on balancing aesthetic vision with energy performance requirements and long-term durability.
+
+We've helped [Similar University Project] achieve [Specific Performance Metric] while maintaining design flexibility and meeting strict sustainability standards. The project won recognition for its innovative façade integration approach.
+
+I'd love to connect this week to discuss how we can support your vision for the Universität Ulm project, especially as you move into the schematic design phase.
+
+Best regards,
+Natascha Christ`
+
+        setSentEmail(automatedEmail)
+        setEmailSentDate(new Date())
+        
         setDeal((prev: any) => ({
           ...prev,
           outreach: {
@@ -300,6 +364,45 @@ export default function DealStagesPage() {
             contactAddedToSequence: true,
             sequenceStatus: 'running',
             awaitingSequenceConfirmation: false,
+            sequenceMode: 'automated',
+          }
+        }))
+
+        // Add two separate assistant messages to the chat
+        setChatMessages(prev => [
+          ...prev,
+          {
+            sender: 'assistant' as const,
+            message: enrollmentMessage,
+            timestamp: 'Just now'
+          },
+          {
+            sender: 'assistant' as const,
+            message: progressMessage,
+            timestamp: 'Just now'
+          }
+        ])
+
+        // We've already handled chat updates for this branch
+        return
+      
+      // Step 2B: User chooses manual, AI-supported sequence
+      } else if (deal.outreach.contactConfirmed && 
+                 deal.outreach.awaitingSequenceConfirmation && 
+                 (normalizedInput.includes('manual') || normalizedInput.includes('ai-supported') || normalizedInput.includes('ai supported'))) {
+        
+        // Add to sequence (manual, AI-supported)
+        assistantResponse = `✅ Perfect. I've enrolled ${deal.outreach.primaryContact?.name} into a **manual, AI-supported architect sequence**.\n\n📋 **Manual AI-Supported Structure (3 steps)**\n1) Manual email – I generate a tailored draft, you review & send\n2) Follow-up phone call – I prepare a call script and help you capture notes\n3) Follow-up email – I draft a follow-up based on call outcomes for you to adjust and send\n\nWe'll start with the **manual email** now – I've prepared a draft for you to review.`
+        
+        // Actually add to sequence and start it (manual mode)
+        setDeal((prev: any) => ({
+          ...prev,
+          outreach: {
+            ...prev.outreach,
+            contactAddedToSequence: true,
+            sequenceStatus: 'running',
+            awaitingSequenceConfirmation: false,
+            sequenceMode: 'manual',
           }
         }))
         
@@ -341,6 +444,22 @@ Natascha Christ`)
       setTimeout(() => handleSendMessage(), 100)
     } else if (action === 'when-ready') {
       setInputValue('When will this deal become ready?')
+      setTimeout(() => handleSendMessage(), 100)
+    } else if (action === 'confirm-contact-yes') {
+      // Simulate user typing "yes" to confirm the new primary contact
+      setInputValue('yes, add this as the primary contact')
+      setTimeout(() => handleSendMessage(), 100)
+    } else if (action === 'confirm-contact-no') {
+      // Simulate user saying no to the new primary contact
+      setInputValue("no, don't change the primary contact")
+      setTimeout(() => handleSendMessage(), 100)
+    } else if (action === 'sequence-automated') {
+      // User chooses fully automated email sequence
+      setInputValue('automated email-only sequence')
+      setTimeout(() => handleSendMessage(), 100)
+    } else if (action === 'sequence-manual') {
+      // User chooses manual, AI-supported sequence
+      setInputValue('manual AI-supported sequence')
       setTimeout(() => handleSendMessage(), 100)
     }
   }
@@ -869,7 +988,9 @@ Natascha Christ`)
                                   <div className="text-left">
                                     <p className="text-sm font-semibold text-blue-900">⚡ Sequence In Progress</p>
                                     <p className="text-xs text-blue-700 mt-0.5">
-                                      {manualStepCompleted ? 'Step 2/5' : 'Step 1/5'} • Architect Early Spec - Facade Systems
+                                      {deal.outreach.sequenceMode === 'automated'
+                                        ? 'Automated Email Sequence • 3 touchpoints'
+                                        : `${manualStepCompleted ? (phoneCallCompleted ? 'Step 3/3' : 'Step 2/3') : 'Step 1/3'} • Manual AI-Supported Sequence`}
                                     </p>
                                   </div>
                                 </div>
@@ -882,7 +1003,19 @@ Natascha Christ`)
                               
                               {/* Progress Bar */}
                               <div className="mt-3 w-full bg-blue-200 rounded-full h-2">
-                                <div className="bg-blue-600 h-2 rounded-full transition-all duration-500" style={{ width: manualStepCompleted ? '40%' : '20%' }}></div>
+                                <div
+                                  className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                                  style={{
+                                    width:
+                                      deal.outreach.sequenceMode === 'automated'
+                                        ? '33%'
+                                        : manualStepCompleted
+                                          ? phoneCallCompleted
+                                            ? '100%'
+                                            : '66%'
+                                          : '33%',
+                                  }}
+                                ></div>
                               </div>
                             </button>
                             
@@ -893,6 +1026,94 @@ Natascha Christ`)
                                 <div className="space-y-3">
                                   <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Sequence Steps</h4>
                                   
+                                  {/* AUTOMATED EMAIL-ONLY SEQUENCE VS MANUAL, AI-SUPPORTED SEQUENCE */}
+                                  {deal.outreach.sequenceMode === 'automated' ? (
+                                    <div className="space-y-3">
+                                      {/* Step 1 - Initial Outreach Email */}
+                                      <div className="border-l-4 pl-4 border-green-500">
+                                        {/* Header - clickable to expand sent email content */}
+                                        <button
+                                          type="button"
+                                          onClick={() => setExpandedStep(expandedStep === 1 ? null : 1)}
+                                          className="w-full flex items-start justify-between mb-2 hover:opacity-80 transition-opacity text-left"
+                                        >
+                                          <div className="flex items-center space-x-2">
+                                            <Check className="w-4 h-4 text-green-600" />
+                                            <div>
+                                              <p className="text-sm font-semibold text-blue-900">
+                                                Step 1: Initial Architect Outreach Email
+                                              </p>
+                                              <p className="text-xs text-gray-600">
+                                                Completed • Sent automatically to ${deal.outreach.primaryContact?.name || 'the contact'}
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center space-x-2">
+                                            {expandedStep === 1 ? (
+                                              <ChevronUp className="w-4 h-4 text-gray-500" />
+                                            ) : (
+                                              <ChevronDown className="w-4 h-4 text-gray-500" />
+                                            )}
+                                          </div>
+                                        </button>
+
+                                        {/* Sent automated email content */}
+                                        {expandedStep === 1 && sentEmail && (
+                                          <div className="mt-2 bg-white border border-blue-200 rounded-lg p-3 text-xs text-gray-800 space-y-2">
+                                            <div className="flex items-center justify-between mb-1">
+                                              <p className="font-semibold text-gray-900">
+                                                Sent Email: Initial Architect Outreach
+                                              </p>
+                                              {emailSentDate && (
+                                                <p className="text-[11px] text-gray-500">
+                                                  Sent just now
+                                                </p>
+                                              )}
+                                            </div>
+                                            <div className="border-t border-gray-200 pt-2 whitespace-pre-line">
+                                              {sentEmail}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Step 2 - Follow-up Email 1 */}
+                                      <div className="border-l-4 pl-4 border-blue-400">
+                                        <div className="flex items-start justify-between mb-2">
+                                          <div className="flex items-center space-x-2">
+                                            <Clock className="w-4 h-4 text-blue-500" />
+                                            <div>
+                                              <p className="text-sm font-semibold text-blue-900">
+                                                Step 2: Follow-up Email 1
+                                              </p>
+                                              <p className="text-xs text-gray-600">
+                                                Scheduled in 3 days • Case study + technical angle
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      {/* Step 3 - Follow-up Email 2 */}
+                                      <div className="border-l-4 pl-4 border-blue-300">
+                                        <div className="flex items-start justify-between mb-2">
+                                          <div className="flex items-center space-x-2">
+                                            <Clock className="w-4 h-4 text-blue-400" />
+                                            <div>
+                                              <p className="text-sm font-semibold text-blue-900">
+                                                Step 3: Follow-up Email 2
+                                              </p>
+                                              <p className="text-xs text-gray-600">
+                                                Scheduled in 7 days • Strong CTA & meeting proposal
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-3">
+                                  {/* MANUAL, AI-SUPPORTED SEQUENCE */}
                                   {/* Step 1 - Manual Email */}
                                   <div className={`border-l-4 pl-4 ${manualStepCompleted ? 'border-green-500' : 'border-blue-500'}`}>
                                     {/* Step Header - Clickable when completed */}
@@ -1221,6 +1442,8 @@ Natascha Christ`)
                                       <Mail className="w-4 h-4 text-gray-400" />
                                     </div>
                                   </div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             )}
@@ -1358,23 +1581,72 @@ Natascha Christ`)
                   
                   {/* Quick Action Buttons */}
                   {deal.outreach.readinessStatus === 'not-ready' && (
-                  <div className="space-y-2 mb-6">
-                    <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3">Quick Actions</p>
-                    
+                    <div className="space-y-2 mb-6">
+                      <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3">Quick Actions</p>
+                      
                       <button 
                         onClick={() => handleQuickAction('explain-timing')}
                         className="w-full px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 transition-colors text-left"
                       >
                         💡 Why is this not ready yet?
-                    </button>
-                    
+                      </button>
+                      
                       <button 
                         onClick={() => handleQuickAction('when-ready')}
                         className="w-full px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 transition-colors text-left"
                       >
                         🕒 When will this become ready?
-                    </button>
-                  </div>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Contact Confirmation Quick Actions */}
+                  {deal.outreach.readinessStatus === 'ready' &&
+                   deal.outreach.primaryContact?.isNew &&
+                   !deal.outreach.contactConfirmed && (
+                    <div className="space-y-2 mb-6">
+                      <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3">
+                        Confirm New Primary Contact
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => handleQuickAction('confirm-contact-yes')}
+                          className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                        >
+                          Yes, set as primary contact
+                        </button>
+                        <button
+                          onClick={() => handleQuickAction('confirm-contact-no')}
+                          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                        >
+                          No, keep existing contact
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sequence Mode Quick Actions */}
+                  {deal.outreach.contactConfirmed &&
+                   deal.outreach.awaitingSequenceConfirmation && (
+                    <div className="space-y-2 mb-6">
+                      <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3">
+                        Choose Outreach Mode
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => handleQuickAction('sequence-automated')}
+                          className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                        >
+                          Fully automated email sequence
+                        </button>
+                        <button
+                          onClick={() => handleQuickAction('sequence-manual')}
+                          className="px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 transition-colors"
+                        >
+                          Manual, AI-supported sequence
+                        </button>
+                      </div>
+                    </div>
                   )}
                   
                   {/* Message Input */}

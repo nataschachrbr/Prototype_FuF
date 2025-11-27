@@ -2,10 +2,30 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, ChevronDown, Building2, Plus, User, ChevronRight, ChevronDown as ChevronDownIcon, Briefcase, Star } from 'lucide-react'
+import {
+  Search,
+  ChevronDown,
+  Building2,
+  Plus,
+  User,
+  ChevronRight,
+  ChevronDown as ChevronDownIcon,
+  Briefcase,
+  Star,
+  Sparkles,
+  X,
+} from 'lucide-react'
 import { peopleData, Person } from '@/lib/people'
 import { getProjectsForCompany, Project } from '@/lib/projects'
 import { ImportCompaniesModal, ImportResult } from './ImportCompaniesModal'
+import { AIResearchPanel } from './AIResearchPanel'
+import {
+  AIResearchSession,
+  attachCompaniesToSession,
+  loadSessions,
+  upsertSession,
+  deleteSession,
+} from '@/lib/aiResearch'
 
 export interface Company {
   id: string
@@ -171,6 +191,10 @@ export function CompanyList() {
   const [favoriteCompanyIds, setFavoriteCompanyIds] = useState<Set<string>>(new Set())
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
+  const [showAIResearch, setShowAIResearch] = useState(false)
+
+  const [researchSessions, setResearchSessions] = useState<AIResearchSession[]>([])
+  const [activeView, setActiveView] = useState<string>('all')
 
   // Local state for companies and any imported contacts so they show up in owners
   const [companies, setCompanies] = useState<Company[]>(companiesData)
@@ -204,6 +228,16 @@ export function CompanyList() {
     }
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
+  // Load existing AI research sessions on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const sessions = loadSessions()
+    setResearchSessions(sessions)
+    if (sessions.length > 0 && activeView === 'all') {
+      setActiveView('all')
+    }
   }, [])
 
   const getOwnersForCompany = (companyName: string): string[] => {
@@ -277,7 +311,21 @@ export function CompanyList() {
       selectedEmployeeRange === '' || getEmployeeRange(company.employees) === selectedEmployeeRange
     const matchesFavorite = !showFavoritesOnly || favoriteCompanyIds.has(company.id)
 
-    return matchesSearch && matchesSegment && matchesLocation && matchesEmployeeRange && matchesFavorite
+    const matchesResearchView =
+      activeView === 'all'
+        ? true
+        : researchSessions
+            .find((s) => s.id === activeView)
+            ?.companyIds.includes(company.id) ?? false
+
+    return (
+      matchesSearch &&
+      matchesSegment &&
+      matchesLocation &&
+      matchesEmployeeRange &&
+      matchesFavorite &&
+      matchesResearchView
+    )
   })
 
   const clearFilters = () => {
@@ -300,6 +348,57 @@ export function CompanyList() {
     }
   }
 
+  const handleAICompaniesDiscovered = (session: AIResearchSession, newCompanies: Company[]) => {
+    // Upsert companies (by name to avoid duplicates)
+    setCompanies((prev) => {
+      const existingByName = new Map(prev.map((c) => [c.name.toLowerCase(), c]))
+      const incoming: Company[] = []
+      newCompanies.forEach((nc) => {
+        if (existingByName.has(nc.name.toLowerCase())) {
+          const existing = existingByName.get(nc.name.toLowerCase())!
+          incoming.push({ ...existing })
+        } else {
+          incoming.push(nc)
+        }
+      })
+      const merged = [...prev, ...incoming.filter((c) => !prev.some((p) => p.id === c.id))]
+      return merged
+    })
+
+    const updated = attachCompaniesToSession(session.id, newCompanies) || session
+    setResearchSessions((prev) => {
+      const idx = prev.findIndex((s) => s.id === updated.id)
+      if (idx === -1) return [updated, ...prev]
+      const next = [...prev]
+      next[idx] = updated
+      return next
+    })
+    setActiveView(updated.id)
+  }
+
+  const handleAIContactsDiscovered = (session: AIResearchSession) => {
+    const updated = session
+    setResearchSessions((prev) => {
+      const idx = prev.findIndex((s) => s.id === updated.id)
+      if (idx === -1) return [updated, ...prev]
+      const next = [...prev]
+      next[idx] = updated
+      return next
+    })
+  }
+
+  const handleDeleteSession = (id: string) => {
+    if (typeof window !== 'undefined') {
+      const confirmed = window.confirm('Remove this AI research list? Companies and contacts stay saved, only the view is removed.')
+      if (!confirmed) return
+    }
+    deleteSession(id)
+    setResearchSessions((prev) => prev.filter((s) => s.id !== id))
+    if (activeView === id) {
+      setActiveView('all')
+    }
+  }
+
   // Format employee count
   const formatEmployeeCount = (count: number): string => {
     if (count >= 1000000) {
@@ -314,8 +413,57 @@ export function CompanyList() {
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
       <div className="border-b border-gray-200 px-8 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Companies</h1>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Companies</h1>
+            <div className="mt-2 inline-flex items-center space-x-2 text-xs text-gray-500">
+              <span>View:</span>
+              <button
+                type="button"
+                onClick={() => setActiveView('all')}
+                className={`px-2 py-1 rounded-full border text-[11px] font-medium ${
+                  activeView === 'all'
+                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Master list
+              </button>
+              {researchSessions.map((session) => (
+                <div
+                  key={session.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setActiveView(session.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      setActiveView(session.id)
+                    }
+                  }}
+                  className={`inline-flex items-center px-2 py-1 rounded-full border text-[11px] font-medium max-w-[240px] space-x-1 ${
+                    activeView === session.id
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                  title={session.name}
+                >
+                  <span className="truncate">{session.name}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDeleteSession(session.id)
+                    }}
+                    className="ml-1 inline-flex items-center justify-center rounded-full p-0.5 hover:bg-gray-200 text-gray-400 hover:text-gray-700"
+                    aria-label="Remove list"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
           <div className="flex items-center space-x-3">
             <button
               type="button"
@@ -323,6 +471,14 @@ export function CompanyList() {
               className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
               Import
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAIResearch(true)}
+              className="inline-flex items-center px-4 py-2 border border-indigo-200 text-indigo-700 bg-indigo-50 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors"
+            >
+              <Sparkles className="w-4 h-4 mr-1.5" />
+              Research with AI
             </button>
             <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
               + Add Company
@@ -740,6 +896,15 @@ export function CompanyList() {
           onClose={() => setShowImportModal(false)}
           existingCompanies={companies}
           onImport={handleImport}
+        />
+      )}
+
+      {showAIResearch && (
+        <AIResearchPanel
+          isOpen={showAIResearch}
+          onClose={() => setShowAIResearch(false)}
+          onCompaniesDiscovered={handleAICompaniesDiscovered}
+          onContactsDiscovered={(session) => handleAIContactsDiscovered(session)}
         />
       )}
     </div>
