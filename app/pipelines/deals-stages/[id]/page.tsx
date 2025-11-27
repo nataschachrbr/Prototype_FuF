@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/Sidebar'
 import { ChevronLeft, ChevronDown, ChevronUp, Send, Mail, Phone, Calendar, Sparkles, Check, Clock, X, Play, Square, Mic, MicOff, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 // Mock deal data – aligned with the 3 outreach deals in the pipeline and
 // matching contacts/companies from the People and Companies pages.
@@ -170,11 +170,13 @@ export default function DealStagesPage() {
   const [showNewInfoNotification, setShowNewInfoNotification] = useState(false)
   const [sequenceDetailsExpanded, setSequenceDetailsExpanded] = useState(true)
   const [emailDraft, setEmailDraft] = useState('')
+  const [emailSubject, setEmailSubject] = useState('Driving Façade Innovation at Universität Ulm')
   const [sentEmail, setSentEmail] = useState('') // Store the sent email content
   const [emailSentDate, setEmailSentDate] = useState<Date | null>(null) // Track when email was sent
   const [manualStepCompleted, setManualStepCompleted] = useState(false)
   const [expandedStep, setExpandedStep] = useState<number | null>(null) // Track which step is expanded
   const [hasShownNewInfoMessage, setHasShownNewInfoMessage] = useState(false)
+  const emailBodyRef = useRef<HTMLTextAreaElement | null>(null)
   
   // Call functionality state
   const [showCallModal, setShowCallModal] = useState(false)
@@ -281,6 +283,15 @@ export default function DealStagesPage() {
     hasShownNewInfoMessage,
     chatMessages.length
   ])
+
+  // Auto-size the manual email textarea so the full email body is visible by default
+  useEffect(() => {
+    if (!manualStepCompleted && emailBodyRef.current) {
+      const el = emailBodyRef.current
+      el.style.height = 'auto'
+      el.style.height = `${el.scrollHeight}px`
+    }
+  }, [emailDraft, manualStepCompleted])
 
   const handleSendMessage = () => {
     if (!inputValue.trim()) return
@@ -391,8 +402,9 @@ Natascha Christ`
                  deal.outreach.awaitingSequenceConfirmation && 
                  (normalizedInput.includes('manual') || normalizedInput.includes('ai-supported') || normalizedInput.includes('ai supported'))) {
         
-        // Add to sequence (manual, AI-supported)
-        assistantResponse = `✅ Perfect. I've enrolled ${deal.outreach.primaryContact?.name} into a **manual, AI-supported architect sequence**.\n\n📋 **Manual AI-Supported Structure (3 steps)**\n1) Manual email – I generate a tailored draft, you review & send\n2) Follow-up phone call – I prepare a call script and help you capture notes\n3) Follow-up email – I draft a follow-up based on call outcomes for you to adjust and send\n\nWe'll start with the **manual email** now – I've prepared a draft for you to review.`
+        const enrollmentManualMessage = `✅ Perfect. I've enrolled ${deal.outreach.primaryContact?.name} into a **manual, AI-supported architect sequence**.`
+        
+        const progressManualMessage = `✏️ **Step 1 – Manual email (AI-assisted)**\nBased on the project context and what we know about ${deal.outreach.primaryContact?.name}, I've drafted a **first outreach email** for you to review.\n\nYou can edit the email on the left in the **Sequence Status** section. Once you're happy with the content, click **“Send Email”** there and I'll mark Step 1 as completed and guide you to the follow-up phone call.`
         
         // Actually add to sequence and start it (manual mode)
         setDeal((prev: any) => ({
@@ -407,19 +419,37 @@ Natascha Christ`
         }))
         
         // Generate email draft with dynamic variables
+        setEmailSubject('Driving Façade Innovation at Universität Ulm')
         setEmailDraft(`Dear Dr. Weber,
 
-I saw you recently joined DEGLE.DEGLE Architekten as Lead Architect & Project Lead for the Universität Ulm renovation project - Congratulations! It's an exciting time in sustainable architecture and building envelope design.
+I saw you recently joined DEGLE.DEGLE Architekten as Lead Architect & Project Lead for the Universität Ulm renovation project - congratulations on the new role.
 
-Architects leading university projects often focus on balancing aesthetic vision with energy performance requirements and long-term durability.
+For projects like Universität Ulm, architects often need to balance design intent with energy performance and long-term durability of the façade.
 
-We've helped [Similar University Project] achieve [Specific Performance Metric] while maintaining design flexibility and meeting strict sustainability standards. The project won recognition for its innovative façade integration approach.
+We've recently supported a university campus project with a high-performance façade system that improved thermal performance and daylight comfort while keeping a very clear architectural language. The project team highlighted the ease of coordination between architect, façade contractor and manufacturer as a key success factor.
 
-I'd love to connect this week to discuss how we can support your vision for the Universität Ulm project, especially as you move into the schematic design phase.
+I'd be happy to share a short case example and some façade concept options that could be relevant as you move into schematic design for Universität Ulm.
 
 Best regards,
 Natascha Christ`)
         
+        // Add two separate assistant messages to the chat for manual flow
+        setChatMessages(prev => [
+          ...prev,
+          {
+            sender: 'assistant' as const,
+            message: enrollmentManualMessage,
+            timestamp: 'Just now'
+          },
+          {
+            sender: 'assistant' as const,
+            message: progressManualMessage,
+            timestamp: 'Just now'
+          }
+        ])
+
+        // We've already handled chat updates for this branch
+        return
       } else if (inputValue.toLowerCase().includes('why') && inputValue.toLowerCase().includes('not ready')) {
         assistantResponse = `Good question. In facade manufacturing, knowing the architect is NOT enough - we need the RIGHT TIMING.\n\n🚫 Why this is "Not Ready Yet":\n\n1. **Design Phase Status**\n   The architect won the competition but hasn't started the actual design contract yet. Winning ≠ immediate planning.\n\n2. **No Facade-Related Work**\n   • No renderings published\n   • No draft elevations exist\n   • No material strategies defined\n   • No envelope performance requirements mentioned\n\n3. **Project Still in Pre-Design**\n   The project is in early concept stage. Building massing, energy goals, and budget targets need to be set before facade design becomes relevant.\n\n📊 What I'm Monitoring:\n   • Planning phase officially starting\n   • First design visuals being released\n   • Materiality mentions (glass, metal, cladding)\n   • Sustainability/energy concepts\n   • Tender timeline announcements\n\nContacting now would be premature. The architect isn't ready to discuss facade systems yet.`
       } else if (inputValue.toLowerCase().includes('when') && inputValue.toLowerCase().includes('ready')) {
@@ -1159,85 +1189,40 @@ Natascha Christ`)
                                       </div>
                                     )}
                                     
-                                    {/* Email Draft - Show if not completed */}
-                                    {!manualStepCompleted && emailDraft && (
+                                    {/* Email Draft - editable area when not completed */}
+                                    {!manualStepCompleted && (
                                       <div className="mt-3 bg-gray-50 rounded-lg border border-gray-200 p-4">
                                         <div className="flex items-center justify-between mb-3">
-                                          <p className="text-xs font-semibold text-gray-700">Email Draft</p>
-                                          <button className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
-                                            Edit Draft
-                                          </button>
+                                          <p className="text-xs font-semibold text-gray-700">Email Draft (AI-generated)</p>
+                                          <p className="text-[11px] text-gray-500">You can edit the subject and body before sending</p>
+                                        </div>
+
+                                        {/* Subject input */}
+                                        <div className="mb-3">
+                                          <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                            Subject
+                                          </label>
+                                          <input
+                                            type="text"
+                                            className="w-full text-sm text-gray-800 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+                                            value={emailSubject}
+                                            onChange={(e) => setEmailSubject(e.target.value)}
+                                          />
+                                        </div>
+
+                                        {/* Body textarea */}
+                                        <div>
+                                          <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                            Email body
+                                          </label>
+                                          <textarea
+                                            ref={emailBodyRef}
+                                            className="w-full text-sm text-gray-800 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+                                            value={emailDraft}
+                                            onChange={(e) => setEmailDraft(e.target.value)}
+                                          />
                                         </div>
                                         
-                                        {/* Email Content with Highlighted Dynamic Variables */}
-                                        <div className="bg-white border border-gray-200 rounded-lg p-4 text-sm text-gray-800 leading-relaxed space-y-3">
-                                          <p className="font-semibold text-gray-900">
-                                            Subject: Driving Façade Innovation at Universität Ulm
-                                          </p>
-                                          
-                                          <div className="border-t border-gray-200 pt-3 space-y-3">
-                                            <p>Dear Dr. Weber,</p>
-                                            
-                                            <p>
-                                              I saw you recently joined DEGLE.DEGLE Architekten as{' '}
-                                              <span className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded font-medium border border-purple-300">
-                                                Lead Architect & Project Lead
-                                              </span>{' '}
-                                              for the{' '}
-                                              <span className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded font-medium border border-purple-300">
-                                                Universität Ulm renovation project
-                                              </span>
-                                              {' '}- Congratulations! It's an exciting time in sustainable architecture and building envelope design.
-                                            </p>
-                                            
-                                            <p className="bg-blue-50 border-l-4 border-blue-400 pl-3 py-2 italic text-blue-900">
-                                              <span className="font-semibold not-italic">✨ Identified challenge:</span><br/>
-                                              Architects leading university projects often focus on balancing aesthetic vision with energy performance requirements and long-term durability.
-                                            </p>
-                                            
-                                            <p>
-                                              We've helped{' '}
-                                              <span className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded font-medium border border-purple-300">
-                                                [Similar University Project]
-                                              </span>{' '}
-                                              achieve{' '}
-                                              <span className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded font-medium border border-purple-300">
-                                                [Specific Performance Metric]
-                                              </span>{' '}
-                                              while maintaining design flexibility and meeting strict sustainability standards. The project won recognition for its innovative façade integration approach.
-                                            </p>
-                                            
-                                            <p>
-                                              I'd love to connect this week to discuss how we can support your vision for the Universität Ulm project, especially as you move into the schematic design phase.
-                                            </p>
-                                            
-                                            <p>
-                                              Best regards,<br/>
-                                              Natascha Christ
-                                            </p>
-                                          </div>
-                                        </div>
-                                        
-                                        {/* Dynamic Variables Legend */}
-                                        <div className="mt-3 pt-3 border-t border-gray-200">
-                                          <p className="text-xs font-semibold text-gray-700 mb-2">📎 Dynamic Variables (AI-filled based on project data):</p>
-                                          <div className="flex flex-wrap gap-2 text-xs">
-                                            <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded border border-purple-200">
-                                              Recent job change
-                                            </span>
-                                            <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded border border-purple-200">
-                                              Project context
-                                            </span>
-                                            <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200">
-                                              Identified challenge
-                                            </span>
-                                            <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded border border-purple-200">
-                                              Value proposition
-                                            </span>
-                                          </div>
-                                        </div>
-                                        
-                                        {/* Send Button */}
                                         <div className="mt-4 flex items-center justify-end space-x-3">
                                           <button
                                             onClick={() => {
@@ -1248,7 +1233,7 @@ Natascha Christ`)
                                               setExpandedStep(1) // Auto-expand step 1 after sending
                                               setChatMessages(prev => [...prev, {
                                                 sender: 'assistant' as const,
-                                                message: '✅ Email sent successfully!\n\n📧 The first outreach email has been sent to Dr. Anna Weber.\n\n⏰ Next Step: Phone call scheduled for 3 days from now (if no reply received).\n\nI\'ll monitor for any replies and update you on engagement.',
+                                                message: `✅ Email sent successfully!\n\n📧 The first outreach email has been sent to ${deal.outreach.primaryContact?.name || 'the contact'}.\n\n⏰ Next Step: Phone call scheduled for 3 days from now (if no reply received).\n\nI'll monitor for any replies and update you on engagement.`,
                                                 timestamp: 'Just now'
                                               }])
                                             }}
@@ -1275,49 +1260,11 @@ Natascha Christ`)
                                         {/* Sent Email Content */}
                                         <div className="bg-white border border-green-200 rounded-lg p-4 text-sm text-gray-800 leading-relaxed space-y-3">
                                           <p className="font-semibold text-gray-900">
-                                            Subject: Driving Façade Innovation at Universität Ulm
+                                            Subject: {emailSubject}
                                           </p>
                                           
-                                          <div className="border-t border-gray-200 pt-3 space-y-3">
-                                            <p>Dear Dr. Weber,</p>
-                                            
-                                            <p>
-                                              I saw you recently joined DEGLE.DEGLE Architekten as{' '}
-                                              <span className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded font-medium border border-purple-300">
-                                                Lead Architect & Project Lead
-                                              </span>{' '}
-                                              for the{' '}
-                                              <span className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded font-medium border border-purple-300">
-                                                Universität Ulm renovation project
-                                              </span>
-                                              {' '}- Congratulations! It's an exciting time in sustainable architecture and building envelope design.
-                                            </p>
-                                            
-                                            <p className="bg-blue-50 border-l-4 border-blue-400 pl-3 py-2 italic text-blue-900">
-                                              <span className="font-semibold not-italic">✨ Identified challenge:</span><br/>
-                                              Architects leading university projects often focus on balancing aesthetic vision with energy performance requirements and long-term durability.
-                                            </p>
-                                            
-                                            <p>
-                                              We've helped{' '}
-                                              <span className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded font-medium border border-purple-300">
-                                                [Similar University Project]
-                                              </span>{' '}
-                                              achieve{' '}
-                                              <span className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded font-medium border border-purple-300">
-                                                [Specific Performance Metric]
-                                              </span>{' '}
-                                              while maintaining design flexibility and meeting strict sustainability standards. The project won recognition for its innovative façade integration approach.
-                                            </p>
-                                            
-                                            <p>
-                                              I'd love to connect this week to discuss how we can support your vision for the Universität Ulm project, especially as you move into the schematic design phase.
-                                            </p>
-                                            
-                                            <p>
-                                              Best regards,<br/>
-                                              Natascha Christ
-                                            </p>
+                                          <div className="border-t border-gray-200 pt-3 space-y-3 whitespace-pre-line">
+                                            {sentEmail}
                                           </div>
                                         </div>
                                       </div>
