@@ -3,7 +3,7 @@
 import { Sidebar } from '@/components/Sidebar'
 import { ContactCard } from '@/components/ContactCard'
 import { ActivityFeed, ActivityEvent } from '@/components/ActivityFeed'
-import { ChevronLeft, ChevronDown, Edit2, MoreVertical, Building2, Calendar, DollarSign, User, Tag, Clock, FileText, Link as LinkIcon, ChevronUp, Send, Phone, Zap } from 'lucide-react'
+import { ChevronLeft, ChevronDown, Edit2, MoreVertical, Building2, Calendar, DollarSign, User, Tag, Clock, FileText, Link as LinkIcon, ChevronUp, Send, Phone, Zap, Mail } from 'lucide-react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useState } from 'react'
