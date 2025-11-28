@@ -38,7 +38,9 @@ export function getAllSequences(): Sequence[] {
 // Helper function to save sequences
 export function saveSequences(sequences: Sequence[]): void {
   if (typeof window !== 'undefined') {
-    localStorage.setItem('sequences', JSON.stringify(sequences))
+    // For demo purposes, do not persist AI-generated demo sequences
+    const sequencesToPersist = sequences.filter(seq => !seq.id.startsWith('ai-'))
+    localStorage.setItem('sequences', JSON.stringify(sequencesToPersist))
   }
 }
 

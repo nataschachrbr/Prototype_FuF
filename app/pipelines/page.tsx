@@ -17,7 +17,7 @@ interface Deal {
 
 // Shared dummy deals that line up with the companies/contacts you see
 // on the People and Companies pages (UK construction ecosystem).
-// 2 in Qualification, 3 in Outreach.
+// 2 in Qualification, 4 in Outreach.
 const mockDeals: Deal[] = [
   // Qualification (Kontaktrecherche)
   {
@@ -66,6 +66,15 @@ const mockDeals: Deal[] = [
     stage: 'terminvereinbarung',
     value: '£2.9M',
     progress: 48,
+  },
+  {
+    id: '6',
+    title: 'Universität Ulm – Sanierung Institutsgebäude',
+    company: 'DEGLE.DEGLE Architekten',
+    status: 'healthy',
+    stage: 'terminvereinbarung',
+    value: '€3.1M',
+    progress: 30,
   },
 ]
 
@@ -153,6 +162,14 @@ export default function PipelinesPage() {
             </div>
             
             <div className="flex items-center space-x-3">
+              {/* Quick link to the Deal Stage Outreach digest email prototype */}
+              <Link
+                href="/pipelines/deals-stages"
+                className="hidden md:inline-flex items-center space-x-1.5 px-3 py-1.5 border border-indigo-200 text-xs font-medium text-indigo-700 rounded-lg bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-300 transition-colors"
+              >
+                <span>Open Deal Stage Outreach digest</span>
+              </Link>
+
               <div className="relative">
                 <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                 <input

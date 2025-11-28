@@ -1,15 +1,22 @@
 'use client'
 
-import { X } from 'lucide-react'
+import { useState } from 'react'
+import { X, Sparkles, MessageSquareMore } from 'lucide-react'
 
 interface CreateSequenceModalProps {
   isOpen: boolean
   onClose: () => void
   onSelectPrebuilt: () => void
   onSelectNew: () => void
+  onSelectAiGenerated: (prompt: string) => void
 }
 
-export function CreateSequenceModal({ isOpen, onClose, onSelectPrebuilt, onSelectNew }: CreateSequenceModalProps) {
+export function CreateSequenceModal({ isOpen, onClose, onSelectPrebuilt, onSelectNew, onSelectAiGenerated }: CreateSequenceModalProps) {
+  const [showAiPrompt, setShowAiPrompt] = useState(false)
+  const [aiPrompt, setAiPrompt] = useState(
+    'Create a fully automated outbound email sequence with 3 emails.\n\nTarget audience: architects who are responsible for major construction or refurbishment projects.\n\nThe sequence should:\n- Run fully automated (no manual tasks)\n- Personalize key parts of each email using the respective project details and the contact (e.g. {{project_name}}, {{contact_first_name}}, {{company_name}})\n- Make it clear these are AI-generated draft ideas that will later be refined automatically per project and contact.'
+  )
+
   if (!isOpen) return null
 
   return (
@@ -67,18 +74,68 @@ export function CreateSequenceModal({ isOpen, onClose, onSelectPrebuilt, onSelec
               <p className="text-sm text-gray-500 text-center">Create a new sequence from scratch.</p>
             </button>
 
-            {/* Clone */}
-            <div className="flex flex-col items-center p-6 border-2 border-gray-200 rounded-lg opacity-50 cursor-not-allowed">
+            {/* AI-generated sequence */}
+            <button
+              onClick={() => setShowAiPrompt(true)}
+              className="flex flex-col items-center p-6 border-2 border-dashed border-indigo-300 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-all group"
+            >
               <div className="w-24 h-24 mb-4 flex items-center justify-center">
                 <div className="relative">
-                  <div className="w-16 h-20 bg-blue-300 rounded"></div>
-                  <div className="absolute w-16 h-20 bg-blue-500 rounded top-2 left-3"></div>
+                  <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <Sparkles className="w-8 h-8 text-indigo-600" />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full border border-indigo-200 flex items-center justify-center">
+                    <MessageSquareMore className="w-4 h-4 text-indigo-500" />
+                  </div>
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Clone</h3>
-              <p className="text-sm text-gray-500 text-center">Make a copy of one of your existing sequences.</p>
-            </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-indigo-600">AI-generated</h3>
+              <p className="text-sm text-gray-500 text-center">Describe who you want to reach and let AI draft the sequence.</p>
+            </button>
           </div>
+
+          {/* AI prompt panel */}
+          {showAiPrompt && (
+            <div className="mt-8 border border-indigo-100 rounded-lg bg-indigo-50/60 p-4 space-y-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-900 flex items-center space-x-2">
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white text-xs mr-1">
+                      <Sparkles className="w-3 h-3" />
+                    </span>
+                    <span>Describe your AI-generated sequence</span>
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    For this prototype, we’ll use a predefined example prompt for a fully automated, 3-email sequence targeting architects.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowAiPrompt(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <textarea
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                className="w-full h-40 text-sm border border-indigo-200 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+              />
+
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-600">
+                  The resulting sequence will be a <span className="font-semibold">fully automated 3-email flow</span> with draft copy that includes clear personalization placeholders.
+                </p>
+                <button
+                  onClick={() => onSelectAiGenerated(aiPrompt)}
+                  className="px-4 py-1.5 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 transition-colors"
+                >
+                  Create AI-generated sequence
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

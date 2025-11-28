@@ -37,6 +37,22 @@ export default function SequencesPage() {
     setShowTemplatesModal(true)
   }
 
+  const handleSelectAiGenerated = (prompt: string) => {
+    // For now we just mock the AI behavior and create a predefined sequence
+    // The prompt is accepted to show how this would work in a real product
+    const newId = `ai-${Date.now()}`
+    const newSequence: Sequence = {
+      id: newId,
+      name: 'AI-generated: Fully automated outreach to architects (3 emails)',
+      status: 'draft',
+      enrolledCount: 0
+    }
+
+    setSequences([newSequence, ...sequences])
+    setSelectedSequenceId(newId)
+    setShowCreateModal(false)
+  }
+
   const handleSelectNew = () => {
     // Create new empty sequence
     const newId = `new-${Date.now()}`
@@ -112,6 +128,7 @@ export default function SequencesPage() {
         onClose={() => setShowCreateModal(false)}
         onSelectPrebuilt={handleSelectPrebuilt}
         onSelectNew={handleSelectNew}
+        onSelectAiGenerated={handleSelectAiGenerated}
       />
 
       <PrebuiltTemplatesModal

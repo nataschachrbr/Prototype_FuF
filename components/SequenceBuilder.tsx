@@ -47,6 +47,44 @@ const sequenceStepsMap: { [key: string]: SequenceStep[] } = {
   ]
 }
 
+const createAiArchitectEmailSteps = (): SequenceStep[] => {
+  return [
+    {
+      id: `ai-email-1`,
+      type: 'automatic_email',
+      title: 'AUTOMATIC EMAIL',
+      description: 'Intro outreach to architect about a specific project',
+      content:
+        'Subject: Exploring how we can support {{project_name}}\n\n' +
+        'Hi {{contact_first_name}},\n\n' +
+        'I was looking into {{project_name}} at {{company_name}} and thought it could be helpful to share a few ideas on how we typically support similar projects.\n\n' +
+        '[AI NOTE: This is a draft suggestion. In a real flow, this email will be automatically rewritten to reference the exact project details, timelines, and known constraints for {{project_name}} and {{company_name}}.]\n'
+    },
+    {
+      id: `ai-email-2`,
+      type: 'automatic_email',
+      title: 'AUTOMATIC EMAIL',
+      description: 'Follow-up with value and light case reference',
+      content:
+        'Subject: Quick follow-up on {{project_name}}\n\n' +
+        'Hi {{contact_first_name}},\n\n' +
+        'Following up on my last note about {{project_name}}. We often work with architects in similar contexts to help with {{insert_high_level_value_here}}.\n\n' +
+        '[AI NOTE: This is a draft suggestion. In production this would be auto-personalized with relevant references, metrics or examples that best match the sector and size of {{company_name}} and the characteristics of {{project_name}}.]\n'
+    },
+    {
+      id: `ai-email-3`,
+      type: 'automatic_email',
+      title: 'AUTOMATIC EMAIL',
+      description: 'Last nudge with clear next step',
+      content:
+        'Subject: Should we schedule time about {{project_name}}?\n\n' +
+        'Hi {{contact_first_name}},\n\n' +
+        'Just a quick note in case this is still relevant for {{project_name}}. If it is, I’d be happy to share a short, tailored walk-through focused on your specific constraints.\n\n' +
+        '[AI NOTE: This is a draft suggestion. The final version would automatically adapt tone, call-to-action and level of detail to the contact seniority and the latest information about {{project_name}}.]\n'
+    }
+  ]
+}
+
 export function SequenceBuilder({ sequenceId, sequenceName, onUpdateName }: SequenceBuilderProps) {
   const [showAddStepModal, setShowAddStepModal] = useState(false)
   const [isEditingName, setIsEditingName] = useState(false)
@@ -63,9 +101,20 @@ export function SequenceBuilder({ sequenceId, sequenceName, onUpdateName }: Sequ
 
   // Update steps when sequence changes
   useEffect(() => {
-    const newSteps = sequenceId && sequenceStepsMap[sequenceId] ? sequenceStepsMap[sequenceId] : []
+    let newSteps = sequenceId && sequenceStepsMap[sequenceId] ? sequenceStepsMap[sequenceId] : []
+
+    // For AI-generated architect sequences, seed a mocked 3-email fully automated flow
+    if (
+      newSteps.length === 0 &&
+      sequenceName &&
+      sequenceName.toLowerCase().includes('architect') &&
+      sequenceName.toLowerCase().includes('fully automated')
+    ) {
+      newSteps = createAiArchitectEmailSteps()
+    }
+
     setSteps(newSteps)
-  }, [sequenceId])
+  }, [sequenceId, sequenceName])
 
   const getStepConfig = (type: StepType) => {
     const configs = {

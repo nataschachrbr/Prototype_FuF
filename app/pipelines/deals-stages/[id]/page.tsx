@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 
-// Mock deal data – aligned with the 3 outreach deals in the pipeline and
+// Mock deal data – aligned with the outreach deals in the pipeline and
 // matching contacts/companies from the People and Companies pages.
 const mockDealData: Record<string, any> = {
   // Deal 3 – HS2 Rail Infrastructure Package (Balfour Beatty / James Robertson)
@@ -110,6 +110,74 @@ const mockDealData: Record<string, any> = {
       sources: [],
     },
   },
+
+  // Deal 6 – Universität Ulm – Sanierung Institutsgebäude (DEGLE.DEGLE / architect timing demo)
+  '6': {
+    id: '6',
+    title: 'Universität Ulm – Sanierung Institutsgebäude',
+    subtitle: 'Campus refurbishment & envelope upgrade',
+    company: 'DEGLE.DEGLE Architekten',
+    value: '€3,100,000',
+    stage: 'Outreach & Meeting Booking',
+    outreach: {
+      readinessStatus: 'not-ready',
+      readinessReason:
+        'The architect has only recently won the competition. Schematic design has not started yet and no façade-related work is underway.',
+      readyTriggers: null,
+      primaryContact: {
+        name: 'Project Team (competition phase)',
+        role: 'Design Team – Competition',
+        company: 'DEGLE.DEGLE Architekten',
+        isNew: false,
+      },
+      sequence: null,
+      personalization: {
+        isReady: true,
+        summary:
+          'Early-stage outreach concept for the Universität Ulm refurbishment, focused on when to engage on façade systems once schematic design begins.',
+      },
+      sequenceStatus: 'not-started',
+      contactAddedToSequence: false,
+      contactConfirmed: false,
+      awaitingSequenceConfirmation: false,
+      sequenceMode: null,
+      sources: [],
+    },
+  },
+
+  // Deal 7 – South Coast Regeneration Framework (Wates Group / no-fit reply demo)
+  '7': {
+    id: '7',
+    title: 'South Coast Regeneration Framework',
+    subtitle: 'Mixed-use regeneration and infrastructure',
+    company: 'Wates Group',
+    value: '£5,300,000',
+    stage: 'Outreach & Meeting Booking',
+    outreach: {
+      readinessStatus: 'ready',
+      readinessReason:
+        'Initial design and commercial structure are confirmed and façade partners have been shortlisted.',
+      readyTriggers: null,
+      primaryContact: {
+        name: 'Laura Spencer',
+        role: 'Framework Director',
+        company: 'Wates Group',
+        isNew: false,
+      },
+      sequence: null,
+      personalization: {
+        isReady: true,
+        summary:
+          'Positioning for framework and future project collaboration, even if the current project is already covered by another façade partner.',
+      },
+      sequenceStatus: 'not-started',
+      contactAddedToSequence: false,
+      contactConfirmed: false,
+      awaitingSequenceConfirmation: false,
+      sequenceMode: null,
+      sources: [],
+    },
+  },
 }
 
 // Helper function to calculate days since date
@@ -177,6 +245,7 @@ export default function DealStagesPage() {
   const [expandedStep, setExpandedStep] = useState<number | null>(null) // Track which step is expanded
   const [hasShownNewInfoMessage, setHasShownNewInfoMessage] = useState(false)
   const emailBodyRef = useRef<HTMLTextAreaElement | null>(null)
+  const chatEndRef = useRef<HTMLDivElement | null>(null)
   
   // Call functionality state
   const [showCallModal, setShowCallModal] = useState(false)
@@ -189,6 +258,211 @@ export default function DealStagesPage() {
   const [callCompletedDate, setCallCompletedDate] = useState<Date | null>(null)
   const [sentVoicemailMessage, setSentVoicemailMessage] = useState('')
   const [followUpEmail, setFollowUpEmail] = useState('')
+
+  // Scenario flags for mocked inbox & sequence behaviour
+  const [automatedReplyReceived, setAutomatedReplyReceived] = useState(false)
+  const [automatedFollowUpSent, setAutomatedFollowUpSent] = useState(false)
+  const [replySummary, setReplySummary] = useState('')
+  const [autoFollowUpEmailContent, setAutoFollowUpEmailContent] = useState('')
+
+  // Reply drafting & calendar integration for positive/negative reply scenarios
+  const [showReplyComposer, setShowReplyComposer] = useState(false)
+  const [replySubject, setReplySubject] = useState('Re: Universität Ulm – façade options')
+  const [replyBody, setReplyBody] = useState('')
+  const [showCalendarPicker, setShowCalendarPicker] = useState(false)
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
+
+  // Simple local flag for disqualifying a deal in the no-fit scenario
+  const [dealDisqualified, setDealDisqualified] = useState(false)
+
+  // For scrolling the left column directly to the Sequence Steps section
+  const leftColumnRef = useRef<HTMLDivElement | null>(null)
+  const sequenceSectionRef = useRef<HTMLDivElement | null>(null)
+
+  // Scenario setup for specific demo deals used in the daily digest
+  useEffect(() => {
+    // Deal 4 – Manual sequence: email already sent, phone call due today
+    if (dealId === '4') {
+      const sentDate = new Date()
+      sentDate.setDate(sentDate.getDate() - 3)
+
+      setDeal((prev: any) => ({
+        ...prev,
+        outreach: {
+          ...prev.outreach,
+          readinessStatus: 'ready',
+          contactConfirmed: true,
+          contactAddedToSequence: true,
+          sequenceStatus: 'running',
+          sequenceMode: 'manual',
+          sequence: {
+            name: 'Manual architect follow-up – demo sequence',
+            touchpoints: 3,
+            duration: '3 steps',
+          },
+        },
+      }))
+
+      setManualStepCompleted(true)
+      setEmailSentDate(sentDate)
+      setEmailSubject('Follow-up on M25 Highways Upgrade')
+      setSentEmail(
+        `Hi Sarah,\n\nAs discussed, I wanted to follow up on the M25 Highways Upgrade and share how we typically support complex road and bridge envelopes.\n\nHappy to walk you through 2–3 reference projects that match your scope.\n\nBest,\nNatascha`,
+      )
+    }
+
+    // Deal 3 – Automated sequence: immediate, positive reply after first email (meeting opportunity)
+    if (dealId === '3') {
+      const sentDate = new Date()
+      sentDate.setHours(sentDate.getHours() - 2)
+
+      setDeal((prev: any) => ({
+        ...prev,
+        outreach: {
+          ...prev.outreach,
+          readinessStatus: 'ready',
+          contactConfirmed: true,
+          contactAddedToSequence: true,
+          sequenceStatus: 'running',
+          sequenceMode: 'automated',
+          sequence: {
+            name: 'Architect Early Spec – Automated Outreach',
+            touchpoints: 3,
+            duration: '3 steps',
+          },
+        },
+      }))
+
+      const automatedEmail = `Dear Dr. Weber,\n\nI work with façade manufacturers supporting university renovation projects very similar to the one you are leading.\n\nBased on early information on the Universität Ulm refurbishment, I thought it could be useful to share a few concept options and reference projects.\n\nWould you be open to a short call next week to see if this is relevant for your design work?\n\nBest regards,\nNatascha Christ`
+
+      setSentEmail(automatedEmail)
+      setEmailSentDate(sentDate)
+      setAutomatedReplyReceived(true)
+      setReplySummary(
+        'Dr. Weber replied that she is very interested in discussing façade options for the Universität Ulm renovation and suggested booking a 30‑minute call next Tuesday to review 1–2 reference projects and potential concepts.',
+      )
+
+      setChatMessages([
+        {
+          sender: 'assistant',
+          message:
+            '✅ Good news – your first automated outreach email received a positive reply from Dr. Anna Weber.\n\nShe confirmed interest and suggested scheduling a 30‑minute meeting next week to look at façade options for the Universität Ulm renovation.\n\nI recommend you:\n1) Propose 2–3 concrete time slots for next week\n2) Bring 1–2 highly relevant university reference projects\n3) Prepare a short agenda focused on performance requirements, aesthetics and programme risk.\n\nI have paused the remaining automated emails in this sequence so you can now take over personally and move this towards a meeting.',
+          timestamp: 'Just now',
+        },
+      ])
+    }
+
+    // Deal 7 – Automated sequence: reply says project is already covered / no current fit
+    if (dealId === '7') {
+      const sentDate = new Date()
+      sentDate.setHours(sentDate.getHours() - 3)
+
+      setDeal((prev: any) => ({
+        ...prev,
+        outreach: {
+          ...prev.outreach,
+          readinessStatus: 'ready',
+          contactConfirmed: true,
+          contactAddedToSequence: true,
+          sequenceStatus: 'running',
+          sequenceMode: 'automated',
+          sequence: {
+            name: 'Architect Follow-up – Disqualification Scenario',
+            touchpoints: 3,
+            duration: '3 steps',
+          },
+        },
+      }))
+
+      const automatedEmail = `Dear Colleague,\n\nThanks again for the great work you are doing on your current projects. I wanted to briefly share how we typically support architects on refurbishment and envelope upgrades similar to your portfolio.\n\nIf it is relevant, I would be happy to walk you through 1–2 reference projects and discuss where we might add value on upcoming work.\n\nBest regards,\nNatascha Christ`
+
+      setSentEmail(automatedEmail)
+      setEmailSentDate(sentDate)
+      setAutomatedReplyReceived(true)
+      setReplySummary(
+        'The architect replied that for this specific project they are already far advanced and have committed to another façade partner, so there is no room to collaborate on this opportunity.',
+      )
+
+      setChatMessages([
+        {
+          sender: 'assistant',
+          message:
+            'ℹ️ I’ve checked your inbox: the architect replied that this project is already covered and they are working with another façade partner, so there is no current fit on this opportunity.\n\nYou have two strategic options:\n1) Respond once more to see if there are **other projects** in their pipeline where an intro call would still make sense.\n2) **Disqualify this deal** in the pipeline and stop further outreach for this project, while keeping the relationship warm for future work.\n\nTell me if you’d like a suggested reply to explore other projects, or if you prefer to mark this deal as disqualified in your pipeline.',
+          timestamp: 'Just now',
+        },
+      ])
+    }
+
+    // Deal 5 – Automated sequence: no reply after 3 days, Follow-up Email 1 sent automatically
+    if (dealId === '5') {
+      const firstEmailDate = new Date()
+      firstEmailDate.setDate(firstEmailDate.getDate() - 3)
+
+      setDeal((prev: any) => ({
+        ...prev,
+        outreach: {
+          ...prev.outreach,
+          readinessStatus: 'ready',
+          contactConfirmed: true,
+          contactAddedToSequence: true,
+          sequenceStatus: 'running',
+          sequenceMode: 'automated',
+          sequence: {
+            name: 'Healthcare Facilities – Automated Outreach',
+            touchpoints: 3,
+            duration: '3 steps',
+          },
+        },
+      }))
+
+      const followUp1 = `Hi Emily,\n\nFollowing up on my note regarding the Healthcare Facilities Programme.\n\nWe recently helped a hospital campus upgrade its façade system to improve infection control, maintenance access and lifecycle cost while keeping disruption to clinical operations low.\n\nIf it would be useful, I can share a short summary and walk through the key design decisions on a 20‑minute call.\n\nBest regards,\nNatascha`
+
+      setSentEmail(followUp1)
+      setEmailSentDate(firstEmailDate)
+      setAutomatedFollowUpSent(true)
+      setAutoFollowUpEmailContent(followUp1)
+
+      setChatMessages([
+        {
+          sender: 'assistant',
+          message:
+            "📧 I've just sent **Follow-up Email 1** for the Healthcare Facilities Programme because there was no reply 3 days after your first outreach.\n\nThe follow-up leans on a short, relevant case and keeps the call-to-action lightweight.\n\nI’ll continue to monitor the inbox for a reply and only trigger the next follow-up if there is still no engagement.",
+          timestamp: 'Just now',
+        },
+      ])
+    }
+  }, [dealId])
+
+  // When opening the manual call scenario deal, automatically scroll
+  // the left column down to the Sequence Steps section.
+  useEffect(() => {
+    if (dealId === '4' && leftColumnRef.current && sequenceSectionRef.current) {
+      const container = leftColumnRef.current
+      const target = sequenceSectionRef.current
+
+      const containerRect = container.getBoundingClientRect()
+      const targetRect = target.getBoundingClientRect()
+      const offset = targetRect.top - containerRect.top
+      const top = container.scrollTop + offset - 24
+
+      container.scrollTo({ top, behavior: 'smooth' })
+    }
+  }, [dealId])
+
+  // Ensure the outreach assistant shows the correct context message in the manual
+  // call scenario, even if other initialization effects have run.
+  useEffect(() => {
+    if (dealId !== '4') return
+
+    setChatMessages([
+      {
+        sender: 'assistant',
+        message:
+          '📧 Three days ago you sent the first manual outreach email to Sarah Mitchell (Kier Group) and there has been no reply yet.\n\n📞 Today your next manual step is to follow up via phone. You can start the call directly from the sequence steps panel on the left – I’ve prepared a tailored call script and will help you capture notes and a follow-up email once you are done.',
+        timestamp: 'Today, 08:05',
+      },
+    ])
+  }, [dealId])
 
   // Initialize chat based on readiness status and email sent date
   useEffect(() => {
@@ -252,7 +526,14 @@ export default function DealStagesPage() {
     }
     
     // Default initial state when deal is not ready yet (only when chat is empty)
-    if (deal.outreach.readinessStatus === 'not-ready' && chatMessages.length === 0) {
+    // Skip for special demo scenarios (3,4,5) where we control the assistant messaging separately.
+    if (
+      deal.outreach.readinessStatus === 'not-ready' &&
+      chatMessages.length === 0 &&
+      dealId !== '3' &&
+      dealId !== '4' &&
+      dealId !== '5'
+    ) {
       initialMessages.push({
         sender: 'assistant' as const,
         message: `I'm analyzing this project's outreach timing.\n\n⚠️ Timing Status: Not Ready Yet\n\n${deal.outreach.readinessReason}\n\nI'm actively monitoring for facade-relevant signals like: first renderings, planning phase kickoff, material strategies, or envelope performance requirements. I'll alert you immediately when the timing becomes favorable.`,
@@ -292,6 +573,13 @@ export default function DealStagesPage() {
       el.style.height = `${el.scrollHeight}px`
     }
   }, [emailDraft, manualStepCompleted])
+
+  // Always scroll chat to the latest message
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [chatMessages])
 
   const handleSendMessage = () => {
     if (!inputValue.trim()) return
@@ -551,15 +839,15 @@ Natascha Christ`)
               
               <div className="h-4 w-px bg-gray-300"></div>
               
-              <div className="flex items-center space-x-3">
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <ChevronLeft className="w-4 h-4 text-gray-600" />
-                </button>
-                <span className="text-sm text-gray-600">5/12 deals from Stage Outreach</span>
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <ChevronDown className="w-4 h-4 text-gray-600" style={{ transform: 'rotate(-90deg)' }} />
-                </button>
-              </div>
+            <div className="flex items-center space-x-3">
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <ChevronLeft className="w-4 h-4 text-gray-600" />
+              </button>
+              <span className="text-sm text-gray-600">6/12 deals from Stage Outreach</span>
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <ChevronDown className="w-4 h-4 text-gray-600" style={{ transform: 'rotate(-90deg)' }} />
+              </button>
+            </div>
             </div>
           </div>
         </div>
@@ -569,7 +857,7 @@ Natascha Christ`)
           {/* OUTREACH STAGE VIEW */}
           <div className="flex-1 flex overflow-hidden">
               {/* Left Column - Outreach Objectives */}
-              <div className="w-[60%] overflow-y-auto px-8 py-6">
+              <div ref={leftColumnRef} className="w-[60%] overflow-y-auto px-8 py-6">
                 {/* Deal Title */}
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">
                   {deal.title}
@@ -582,7 +870,8 @@ Natascha Christ`)
                   </button>
                 </div>
                 
-                {/* Simulate Buttons - for demo purposes */}
+                {/* Simulate Buttons - for demo purposes (hidden in manual call digest scenario) */}
+                {dealId !== '4' && (
                 <div className="mb-4 space-y-3">
                   <button
                     onClick={simulateNewInformation}
@@ -659,7 +948,7 @@ Natascha Christ`)
                         </button>
                       </div>
                       <p className="text-xs text-gray-600 mt-3">Current: Email sent {getDaysSince(emailSentDate) !== null ? `${getDaysSince(emailSentDate)} day${getDaysSince(emailSentDate)! > 1 ? 's' : ''} ago` : 'just now'}</p>
-                    </div>
+                              </div>
                   )}
                   
                   {/* Call Simulation Controls - Only show if call is available */}
@@ -788,6 +1077,7 @@ Natascha Christ`)
                     </div>
                   )}
                 </div>
+                )}
                 
                 {/* Outreach Objectives */}
                 <div className="space-y-4">
@@ -1051,7 +1341,10 @@ Natascha Christ`)
                             
                             {/* Expanded Content */}
                             {sequenceDetailsExpanded && (
-                              <div className="bg-white border border-blue-200 rounded-lg p-4 space-y-4">
+                              <div
+                                ref={sequenceSectionRef}
+                                className="bg-white border border-blue-200 rounded-lg p-4 space-y-4"
+                              >
                                 {/* Sequence Steps */}
                                 <div className="space-y-3">
                                   <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Sequence Steps</h4>
@@ -1074,7 +1367,13 @@ Natascha Christ`)
                                                 Step 1: Initial Architect Outreach Email
                                               </p>
                                               <p className="text-xs text-gray-600">
-                                                Completed • Sent automatically to ${deal.outreach.primaryContact?.name || 'the contact'}
+                                                {automatedReplyReceived
+                                                  ? `Completed • Sent automatically to ${
+                                                      deal.outreach.primaryContact?.name || 'the contact'
+                                                    } • Reply received – sequence paused`
+                                                  : `Completed • Sent automatically to ${
+                                                      deal.outreach.primaryContact?.name || 'the contact'
+                                                    }`}
                                               </p>
                                             </div>
                                           </div>
@@ -1089,39 +1388,132 @@ Natascha Christ`)
 
                                         {/* Sent automated email content */}
                                         {expandedStep === 1 && sentEmail && (
-                                          <div className="mt-2 bg-white border border-blue-200 rounded-lg p-3 text-xs text-gray-800 space-y-2">
-                                            <div className="flex items-center justify-between mb-1">
-                                              <p className="font-semibold text-gray-900">
-                                                Sent Email: Initial Architect Outreach
-                                              </p>
-                                              {emailSentDate && (
-                                                <p className="text-[11px] text-gray-500">
-                                                  Sent just now
+                                          <div className="mt-2 space-y-3">
+                                            <div className="bg-white border border-blue-200 rounded-lg p-3 text-xs text-gray-800 space-y-2">
+                                              <div className="flex items-center justify-between mb-1">
+                                                <p className="font-semibold text-gray-900">
+                                                  Sent Email: Initial Architect Outreach
                                                 </p>
-                                              )}
+                                                {emailSentDate && (
+                                                  <p className="text-[11px] text-gray-500">
+                                                    Sent {automatedReplyReceived ? 'earlier today' : 'just now'}
+                                                  </p>
+                                                )}
+                                              </div>
+                                              <div className="border-t border-gray-200 pt-2 whitespace-pre-line">
+                                                {sentEmail}
+                                              </div>
                                             </div>
-                                            <div className="border-t border-gray-200 pt-2 whitespace-pre-line">
-                                              {sentEmail}
-                                            </div>
+
+                                            {automatedReplyReceived && replySummary && (
+                                              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-xs text-emerald-900 space-y-2">
+                                                <div className="space-y-1.5">
+                                                  <p className="font-semibold">
+                                                    📥 Reply received from {deal.outreach.primaryContact?.name || 'the contact'}
+                                                  </p>
+                                                  <p className="whitespace-pre-line">
+                                                    {replySummary}
+                                                  </p>
+                                                  <p className="text-[11px] text-emerald-800 mt-1">
+                                                    The remaining automated steps have been paused so you can decide on the next best manual step.
+                                                  </p>
+                                                </div>
+
+                                                {/* Draft reply CTA – positive reply (deal 3) and no-fit reply (deal 7) */}
+                                                {dealId === '3' && (
+                                                  <div className="pt-2 border-t border-emerald-100 flex items-center justify-between">
+                                                    <p className="text-[11px] text-emerald-900 pr-3">
+                                                      You can reply now, propose concrete time slots and I’ll help you send the invite.
+                                                    </p>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => {
+                                                        setShowReplyComposer(true)
+                                                        if (!replyBody) {
+                                                          setReplyBody(
+                                                            `Dear ${deal.outreach.primaryContact?.name || 'Dr. Weber'},\n\n` +
+                                                            `thank you very much for your positive reply and for suggesting a short call to discuss façade options for the Universität Ulm renovation.\n\n` +
+                                                            `I’d be happy to schedule a 30‑minute meeting. ` +
+                                                            `I will propose a couple of time slots below – feel free to pick the one that works best for you or suggest an alternative.\n\n` +
+                                                            `Best regards,\n` +
+                                                            `Natascha Christ`,
+                                                          )
+                                                        }
+                                                      }}
+                                                      className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-[11px] font-medium shadow-sm"
+                                                    >
+                                                      <Mail className="w-3.5 h-3.5" />
+                                                      <span>Draft email reply</span>
+                                                    </button>
+                                                  </div>
+                                                )}
+
+                                                {dealId === '7' && (
+                                                  <div className="pt-2 border-t border-emerald-100 flex items-center justify-between">
+                                                    <p className="text-[11px] text-emerald-900 pr-3">
+                                                      You can send a short, polite note to see if other projects might still be relevant.
+                                                    </p>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => {
+                                                        setShowReplyComposer(true)
+                                                        setShowCalendarPicker(false)
+                                                        setSelectedSlot(null)
+                                                        setReplySubject('Re: Current façade partner / future projects')
+                                                        setReplyBody(
+                                                          `Dear ${deal.outreach.primaryContact?.name || 'there'},\n\n` +
+                                                          `thank you for letting me know that this particular project is already covered and that you are working with another façade partner.\n\n` +
+                                                          `If there are other projects in your pipeline where it could still be useful to look at façade concepts or reference projects, I’d be very happy to share a few relevant examples and see whether a short call would make sense.\n\n` +
+                                                          `If not, no worries at all – I really appreciate the transparency and would be glad to stay in touch for future opportunities.\n\n` +
+                                                          `Best regards,\n` +
+                                                          `Natascha Christ`
+                                                        )
+                                                      }}
+                                                      className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-md text-[11px] font-medium shadow-sm"
+                                                    >
+                                                      <Mail className="w-3.5 h-3.5" />
+                                                      <span>Draft email reply</span>
+                                                    </button>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            )}
                                           </div>
                                         )}
                                       </div>
 
                                       {/* Step 2 - Follow-up Email 1 */}
-                                      <div className="border-l-4 pl-4 border-blue-400">
+                                      <div className={`border-l-4 pl-4 ${automatedFollowUpSent ? 'border-green-500' : 'border-blue-400'}`}>
                                         <div className="flex items-start justify-between mb-2">
                                           <div className="flex items-center space-x-2">
-                                            <Clock className="w-4 h-4 text-blue-500" />
+                                            {automatedFollowUpSent ? (
+                                              <Check className="w-4 h-4 text-green-600" />
+                                            ) : (
+                                              <Clock className="w-4 h-4 text-blue-500" />
+                                            )}
                                             <div>
                                               <p className="text-sm font-semibold text-blue-900">
                                                 Step 2: Follow-up Email 1
                                               </p>
                                               <p className="text-xs text-gray-600">
-                                                Scheduled in 3 days • Case study + technical angle
+                                                {automatedFollowUpSent
+                                                  ? 'Completed • Sent automatically after 3 days with no reply'
+                                                  : 'Scheduled in 3 days • Case study + technical angle'}
                                               </p>
                                             </div>
                                           </div>
                                         </div>
+
+                                        {automatedFollowUpSent && autoFollowUpEmailContent && (
+                                          <div className="mt-2 bg-white border border-blue-200 rounded-lg p-3 text-xs text-gray-800">
+                                            <p className="font-semibold text-gray-900 mb-1">
+                                              Sent Email: Follow-up 1 (Healthcare Facilities)
+                                            </p>
+                                            <div className="border-t border-gray-200 pt-2 whitespace-pre-line">
+                                              {autoFollowUpEmailContent}
+                                            </div>
+                                          </div>
+                                        )}
                                       </div>
 
                                       {/* Step 3 - Follow-up Email 2 */}
@@ -1389,10 +1781,11 @@ Natascha Christ`)
                                       <Mail className="w-4 h-4 text-gray-400" />
                                     </div>
                                   </div>
-                                    </div>
+                                </div>
                                   )}
                                 </div>
                               </div>
+
                             )}
                           </div>
                         )}
@@ -1437,6 +1830,142 @@ Natascha Christ`)
                 </div>
               </div>
               
+              {/* Reply composer overlay – positive reply (deal 3) and no-fit (deal 7) scenarios */}
+              {(dealId === '3' || dealId === '7') && showReplyComposer && (
+                <div className="fixed bottom-6 left-80 z-40 w-[420px]">
+                  <div className="bg-white border border-indigo-200 rounded-xl shadow-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-semibold text-indigo-900 uppercase tracking-wide">
+                          Draft reply email
+                        </p>
+                        <p className="text-[11px] text-gray-600">
+                          AI-generated reply you can edit. You can propose a time using the calendar; sending here only
+                          sends the email (no calendar invite in this prototype).
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowReplyComposer(false)
+                          setShowCalendarPicker(false)
+                        }}
+                        className="text-[11px] text-gray-500 hover:text-gray-800"
+                      >
+                        Close
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-700 mb-1">
+                        Subject
+                      </label>
+                      <input
+                        type="text"
+                        value={replySubject}
+                        onChange={(e) => setReplySubject(e.target.value)}
+                        className="w-full text-xs border border-gray-300 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-gray-600">
+                      <span className="text-gray-500">Reply body</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowCalendarPicker(true)}
+                        className="inline-flex items-center space-x-1 px-2 py-0.5 rounded border border-indigo-300 bg-white text-indigo-700 hover:bg-indigo-50"
+                      >
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>Open calendar</span>
+                      </button>
+                    </div>
+
+                    <textarea
+                      value={replyBody}
+                      onChange={(e) => setReplyBody(e.target.value)}
+                      rows={6}
+                      className="w-full text-xs border border-gray-300 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+
+                    {showCalendarPicker && (
+                      <div className="mt-2 border border-gray-200 rounded-md bg-gray-50 p-3 space-y-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-[11px] font-semibold text-gray-800">
+                            Select a time slot to propose
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setShowCalendarPicker(false)}
+                            className="text-[11px] text-gray-500 hover:text-gray-700"
+                          >
+                            Close
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-[11px]">
+                          {[
+                            'Tuesday, 10:00–10:30 CET',
+                            'Wednesday, 14:00–14:30 CET',
+                            'Thursday, 09:00–09:30 CET',
+                            'Friday, 11:30–12:00 CET',
+                          ].map((slot) => (
+                            <button
+                              key={slot}
+                              type="button"
+                              onClick={() => {
+                                setSelectedSlot(slot)
+                                setShowCalendarPicker(false)
+                                const insertion = `\n\nHow would ${slot} work for you? If none of these times are ideal, I’m happy to adapt.`
+                                if (!replyBody.includes(insertion.trim())) {
+                                  setReplyBody((prev) => prev + insertion)
+                                }
+                              }}
+                              className={`px-2 py-1 rounded border text-left ${
+                                selectedSlot === slot
+                                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                                  : 'border-gray-200 bg-white hover:bg-gray-100'
+                              }`}
+                            >
+                              {slot}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      {selectedSlot && (
+                        <p className="text-[11px] text-gray-600">
+                          Selected slot:{' '}
+                          <span className="font-semibold text-gray-900">{selectedSlot}</span>
+                        </p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowReplyComposer(false)
+                          setShowCalendarPicker(false)
+                          setChatMessages((prev) => [
+                            ...prev,
+                            {
+                              sender: 'assistant',
+                              message:
+                                selectedSlot
+                                  ? `✅ I’ve drafted (and in this prototype) “sent” your reply proposing **${selectedSlot}**. In a real system this would send the email only; you’d send the calendar invite once they confirm the time.`
+                                  : '✅ I’ve drafted (and in this prototype) “sent” your reply. In a real system this would send the email, and you’d send the calendar invite separately once the time is confirmed.',
+                              timestamp: 'Just now',
+                            },
+                          ])
+                        }}
+                        className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-[11px] font-medium shadow-sm ml-auto"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Send email</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Right Column - Outreach Assistant */}
               <div className="w-[40%] bg-white border-l border-gray-200 overflow-y-auto">
                 <div className="p-6">
@@ -1466,19 +1995,108 @@ Natascha Christ`)
                                   {msg.message}
                                 </p>
                                 
-                                {/* Action Button - Start Call */}
-                                {msg.message.includes('Ready to make the call') && manualStepCompleted && getDaysSince(emailSentDate) !== null && getDaysSince(emailSentDate)! >= 3 && !phoneCallCompleted && (
-                                  <div className="mt-3 pt-3 border-t border-gray-300">
+                                {/* Quick actions for specific assistant messages */}
+                                {/* Call quick action for manual sequence */}
+                                {msg.message.includes('Ready to make the call') &&
+                                  manualStepCompleted &&
+                                  getDaysSince(emailSentDate) !== null &&
+                                  getDaysSince(emailSentDate)! >= 3 &&
+                                  !phoneCallCompleted && (
+                                    <div className="mt-3 pt-3 border-t border-gray-300">
+                                      <button
+                                        onClick={() => setShowCallModal(true)}
+                                        className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                                      >
+                                        <Phone className="w-4 h-4" />
+                                        <span>Start Phone Call</span>
+                                      </button>
+                                    </div>
+                                  )}
+
+                                {/* Positive reply quick action – deal 3 */}
+                                {dealId === '3' &&
+                                  msg.message.includes('positive reply from Dr. Anna Weber') && (
+                                    <div className="mt-3 pt-3 border-t border-gray-300 flex justify-end">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setShowReplyComposer(true)
+                                          setShowCalendarPicker(false)
+                                          setSelectedSlot(null)
+                                          if (!replyBody) {
+                                            setReplySubject('Re: Universität Ulm – façade options')
+                                            setReplyBody(
+                                              `Dear ${deal.outreach.primaryContact?.name || 'Dr. Weber'},\n\n` +
+                                              `thank you very much for your positive reply and for suggesting a short call to discuss façade options for the Universität Ulm renovation.\n\n` +
+                                              `I’d be happy to schedule a 30‑minute meeting. ` +
+                                              `I will propose a couple of time slots below – feel free to pick the one that works best for you or suggest an alternative.\n\n` +
+                                              `Best regards,\n` +
+                                              `Natascha Christ`
+                                            )
+                                          }
+                                        }}
+                                        className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-[11px] font-medium shadow-sm"
+                                      >
+                                        <Mail className="w-3.5 h-3.5" />
+                                        <span>Draft email reply</span>
+                                      </button>
+                                    </div>
+                                  )}
+
+                                {/* No-fit reply quick actions – deal 7 */}
+                                {dealId === '7' && !dealDisqualified && msg.message.includes('there is no current fit on this opportunity') && (
+                                  <div className="mt-3 pt-3 border-t border-gray-300 flex flex-wrap gap-2">
                                     <button
-                                      onClick={() => setShowCallModal(true)}
-                                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                                      type="button"
+                                      onClick={() => {
+                                        setShowReplyComposer(true)
+                                        setShowCalendarPicker(false)
+                                        setSelectedSlot(null)
+                                        setReplySubject('Re: Current façade partner / future projects')
+                                        setReplyBody(
+                                          `Dear ${deal.outreach.primaryContact?.name || 'there'},\n\n` +
+                                          `thank you again for letting me know that this particular project is already covered and that you are working with another façade partner.\n\n` +
+                                          `If there are other projects in your pipeline where it might still be helpful to look at façade concepts or references, I’d be very happy to share a few examples and see whether a short call would make sense.\n\n` +
+                                          `If not, no worries at all – I appreciate the transparency and would be glad to stay in touch for future opportunities.\n\n` +
+                                          `Best regards,\n` +
+                                          `Natascha Christ`
+                                        )
+                                      }}
+                                      className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-md border border-amber-300 bg-amber-50 text-[11px] font-medium text-amber-800 hover:bg-amber-100"
                                     >
-                                      <Phone className="w-4 h-4" />
-                                      <span>Start Phone Call</span>
+                                      <Mail className="w-3.5 h-3.5" />
+                                      <span>Draft email about other projects</span>
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setDealDisqualified(true)
+                                        setDeal((prev: any) => ({
+                                          ...prev,
+                                          outreach: {
+                                            ...prev.outreach,
+                                            sequenceStatus: 'completed',
+                                          },
+                                        }))
+                                        setChatMessages((prev) => [
+                                          ...prev,
+                                          {
+                                            sender: 'assistant',
+                                            message:
+                                              '🛑 I’ve marked this deal as disqualified in this outreach stage and stopped further automated steps for this project.\n\nIn a real pipeline, this would remove the deal from your active outreach view while keeping the contact and history for future reference.',
+                                            timestamp: 'Just now',
+                                          },
+                                        ])
+                                      }}
+                                      className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-md border border-gray-300 bg-gray-50 text-[11px] font-medium text-gray-700 hover:bg-gray-100"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                      <span>Disqualify deal</span>
                                     </button>
                                   </div>
                                 )}
-                                
+
                                 {/* Sources Section */}
                                 {msg.sources && msg.sources.length > 0 && (
                                   <div className="mt-3 pt-3 border-t border-gray-300">
@@ -1499,6 +2117,60 @@ Natascha Christ`)
                                         </a>
                                       ))}
                                     </div>
+
+                  {/* Quick actions – especially for no-fit reply scenario (deal 7) */}
+                  {dealId === '7' && !dealDisqualified && (
+                    <div className="mb-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowReplyComposer(true)
+                          setShowCalendarPicker(false)
+                          setSelectedSlot(null)
+                          setReplySubject('Re: Current façade partner / future projects')
+                          setReplyBody(
+                            `Dear ${deal.outreach.primaryContact?.name || 'there'},\n\n` +
+                            `thank you again for letting me know that this particular project is already covered and that you are working with another façade partner.\n\n` +
+                            `If there are other projects in your pipeline where it might still be helpful to look at façade concepts or references, I’d be very happy to share a few examples and see whether a short call would make sense.\n\n` +
+                            `If not, no worries at all – I appreciate the transparency and would be glad to stay in touch for future opportunities.\n\n` +
+                            `Best regards,\n` +
+                            `Natascha Christ`
+                          )
+                        }}
+                        className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-md border border-amber-300 bg-amber-50 text-[11px] font-medium text-amber-800 hover:bg-amber-100"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                        <span>Draft email about other projects</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDealDisqualified(true)
+                          setDeal((prev: any) => ({
+                            ...prev,
+                            outreach: {
+                              ...prev.outreach,
+                              sequenceStatus: 'completed',
+                            },
+                          }))
+                          setChatMessages((prev) => [
+                            ...prev,
+                            {
+                              sender: 'assistant',
+                              message:
+                                '🛑 I’ve marked this deal as disqualified in this outreach stage and stopped further automated steps for this project.\n\nIn a real pipeline, this would remove the deal from your active outreach view while keeping the contact and history for future reference.',
+                              timestamp: 'Just now',
+                            },
+                          ])
+                        }}
+                        className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-md border border-gray-300 bg-gray-50 text-[11px] font-medium text-gray-700 hover:bg-gray-100"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        <span>Disqualify deal</span>
+                      </button>
+                    </div>
+                  )}
                                   </div>
                                 )}
                               </div>
@@ -1524,6 +2196,7 @@ Natascha Christ`)
                             )}
                       </div>
                     ))}
+                    <div ref={chatEndRef} />
                   </div>
                   
                   {/* Quick Action Buttons */}
