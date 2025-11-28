@@ -27,6 +27,15 @@ interface SequenceStep {
   content?: string
 }
 
+interface StepConfig {
+  icon: React.ComponentType<{ className?: string }>
+  bgColor: string
+  borderColor: string
+  iconBgColor: string
+  badge?: string
+  badgeColor?: string
+}
+
 // Store steps per sequence
 const sequenceStepsMap: { [key: string]: SequenceStep[] } = {
   '2': [ // Standard Outreach
@@ -116,8 +125,8 @@ export function SequenceBuilder({ sequenceId, sequenceName, onUpdateName }: Sequ
     setSteps(newSteps)
   }, [sequenceId, sequenceName])
 
-  const getStepConfig = (type: StepType) => {
-    const configs = {
+  const getStepConfig = (type: StepType): StepConfig => {
+    const configs: Record<StepType, StepConfig> = {
       automatic_email: {
         icon: Mail,
         bgColor: 'bg-blue-50',
@@ -303,7 +312,7 @@ export function SequenceBuilder({ sequenceId, sequenceName, onUpdateName }: Sequ
                       <div className="flex items-center space-x-1.5">
                         <h3 className="text-xs font-semibold text-gray-900">{step.title}</h3>
                         {config.badge && (
-                          <span className={`flex items-center space-x-0.5 text-[10px] font-medium ${config.badgeColor}`}>
+                          <span className={`flex items-center space-x-0.5 text-[10px] font-medium ${config.badgeColor || ''}`}>
                             <Sparkles className="w-2.5 h-2.5" />
                             <span>{config.badge}</span>
                           </span>
